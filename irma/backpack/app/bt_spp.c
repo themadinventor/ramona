@@ -641,13 +641,13 @@ err_t read_bdaddr_complete(void *arg, struct bd_addr *bdaddr)
 				bdaddr->addr[5], bdaddr->addr[4], bdaddr->addr[3],
 				bdaddr->addr[2], bdaddr->addr[1], bdaddr->addr[0]));
 
-    {
+    /*{
         unsigned char buf[32];
         unsigned char *addr = bdaddr->addr;
         sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x", addr[5], addr[4], addr[3],
                 addr[2], addr[1], addr[0]);
         nolle_transmit(0x06, buf, strlen(buf));
-    }
+    }*/
 
     return ERR_OK;
 }
@@ -666,7 +666,7 @@ err_t read_bdaddr_complete(void *arg, struct bd_addr *bdaddr)
  */
 err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t result)
 {
-	//u8_t cod_spp[] = {0x08,0x04,0x24}; // Render/Audio, handsfree
+    //u8_t cod_spp[] = {0x08,0x04,0x24}>; // Render/Audio, handsfree
 	u8_t cod_spp[] = {0x00,0x00,0x04}; // Render, misc.
 	u8_t devname[32];
 	u8_t n1, n2, n3;
@@ -742,7 +742,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 				case HCI_WRITE_COD:
 					if(result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Successful HCI_WRITE_COD.\n"));
-                        sprintf(devname, "blinkmojt-%02x%02x%02x",
+                        sprintf(devname, "ramona-%02x%02x%02x",
                                 bt_spp_state.bdaddr.addr[0],
                                 bt_spp_state.bdaddr.addr[1],
                                 bt_spp_state.bdaddr.addr[2]);

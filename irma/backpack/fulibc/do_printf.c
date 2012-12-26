@@ -221,8 +221,8 @@ DO_NUM:
 				do {
 					unsigned long temp;
 
-					//temp = num % radix;
-					temp = (unsigned long) num & 0x0f;
+					temp = (unsigned long) num % radix;
+					//temp = (unsigned long) num & 0x0f;
 					where--;
 					if (temp < 10)
 						*where = temp + '0';
@@ -230,8 +230,8 @@ DO_NUM:
 						*where = temp - 10 + 'A';
 					else
 						*where = temp - 10 + 'a';
-					//num = num / radix;
-					num = (unsigned long) num >> 4;
+					num = (unsigned long) num / radix;
+					//num = (unsigned long) num >> 4;
 				} while (num != 0);
 				goto EMIT;
 

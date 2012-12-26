@@ -5,4 +5,4 @@ cd ..
 cd patch
 ./patch_rok101008_backpack_nodfu.py
 cd ..
-./irmaload.py flash
+./irmaload.py flash flash_rok101008_nodfu.bin

@@ -18,7 +18,7 @@ entry:                      /* +8: ROM jumps here */
 
 /* Secret header */
 .thumb
-    b       init_hook       /* +10: Init hook */
+    b       div_by_zero     /* +10: Divide by zero */
     b       uart2_rx_int    /* +12: UART2 Rx Int */
 .int        backpackProc    /* +14: Process descriptor */
 .int        procmem+2048    /* +18: Process PCB */
@@ -26,9 +26,22 @@ entry:                      /* +8: ROM jumps here */
 .balign 0x40
     .ascii  "Ramona FW"     /* +40: Comment */
 
-/* Jump to main */
+/* The real entry point. Jump to the "real" firmware */
+/* but initialize our memory first. */
 .arm
 .balign 0x80                /* +80: Entry point */
 start:
+    ldr     r0, =(thumb+1)
+    bx      r0
+.thumb
+thumb:
+    ldr     r0, =0x2600
+    mov     sp, r0
+    bl      InitDataZeroBSS
+    ldr     r0, =arm
+    bx      r0
+.arm
+arm:
     ldr     r0, =0x01010004
     mov     pc, r0
+

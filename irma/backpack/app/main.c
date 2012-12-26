@@ -26,15 +26,6 @@
 #include "lwip/sys.h"
 #include "lwip/stats.h"
 
-/*
- * vanilla bss at 00000e74 and 54548 bytes long:
- * bss ends at 0000e388
- * 
- * our bss at 0000e400 until end of space and time (15 kB-ish)
- */
-
-extern void _text, _etext, _data, _edata, _bss, _ebss;
-
 void bpMain(void);
 
 //extern void InitHW(void);
@@ -70,20 +61,12 @@ const PROCINIT backpackProc = {
 };
 
 /*
- * This might be called by the runtime functions in math.S
- */
-void __div0(void)
-{
-    UART2WriteString("OHMYGAAH! Division By Zero!\n");
-    for (;;);
-}
-
-/*
  * IT'S A TRAP!
  */
-void trap(unsigned int dummy)
+void div_by_zero(unsigned int dummy)
 {
     UART2WriteString("\n\r\n\r####### IT'S A TRAP! #######\n\r\n\r");
+    UART2WriteString("Division by Zero.\n\r");
 
     unsigned int *ptr = &dummy;
     int i;
@@ -101,34 +84,6 @@ void trap(unsigned int dummy)
 
     UART2WriteString("\n\r#### End of stack trace ####\n\r");
     for (;;) ;
-}
-
-/*
- * Initialize the data segment from flash and clear the .bss seg.
- */
-void InitDataZeroBSS(void)
-{
-    register char *src = &_etext;
-    register char *dst = &_data;
-    register char *end = &_edata;
-
-    while (dst < end)
-        *dst++ = *src++;
-
-    for (dst = &_bss, end = &_ebss; dst < end; dst++)
-        *dst = 0;
-}
-
-/*
- * This gets called before OSE is initialized.
- * It must return zero.
- */
-int init_hook(void)
-{
-    InitDataZeroBSS();
-
-    // We must return 0, or we'll get unknown behaviour
-    return 0;
 }
 
 /*
@@ -171,20 +126,18 @@ int lwbt_init(void)
 
 void lwbt_timer(void)
 {
-    //unsigned int tick = OSE_get_ticks();
+    static int blink;
+    UART2PutChar(blink ? 0x01 : 0x02);
+    blink = !blink;
 
-    //printf("\x1b[s\x1b[H\x1b[44m{ NolleBT %08x }\x1b[0m\x1b[u", tick);
-
-    //printf("lwbt_timer\n");
-    
 	l2cap_tmr();
 	rfcomm_tmr();
 	bt_spp_tmr();
 
-    static int inquiry_timeout = 60;
+    /*static int inquiry_timeout = 60;
     if ((inquiry_timeout) && (!(--inquiry_timeout))) {
         hci_write_scan_enable(HCI_SCAN_EN_PAGE);
-    }
+    }*/
 }
 
 void nolle_transmit(unsigned char type, void *data, unsigned char len)
@@ -250,68 +203,14 @@ void nolle_receive(unsigned char *data, unsigned char inlen)
  */
 void bpMain(void)
 {
-    //unsigned int sp;
-    //asm ("mov %0, sp":"=r" (sp));
+    printf("Ramona r.1 / IRMA build %s %s\n", build_time, build_comment);
+    //printf("Available RAM: %d bytes\n", 123456789);
 
-    //UART2SetBaudRate(UART_115200);
-    //UART1SetBaudRate(UART_9600);
-
-    //InitHW();
-    //*((unsigned short *)0x00800d04) = 0xffff;
-    //UARTInit();
-    {
-        unsigned char buf[64];
-        sprintf(buf, "IRMA Backpack, Build: %s %s", build_time, build_comment);
-        nolle_transmit(0x00, buf, strlen(buf));
-    }
-
-
-    //UART2WriteString("Uart 2!\n\r");
-    //UART3SetBaudRate(UART_9600);
-    //UART3WriteString("Uart 3! wej wej wej wej wej wej wej\n\r");
-    
-    //UART3PutChar('k');
-    //UART3PutChar('o');
-    //UART3PutChar('n');
-    //UART3PutChar('g');
-    //UART3PutChar('o');
-    //UART2WriteString("Uart 2 again!\n\r");
-    //UART1SetBaudRate(UART_9600);
-    //UART1WriteString("*UART1*\n\r");
-    //printf("Wrote to UART1\n");
-
-    //UART3SetBaudRate(UART_9600);
-    //UART3WriteString("*UART3*\n\r");
-    //printf("Wrote to UART3\n");
-
-    //for(;;);
-
-    //printf("My stack is at %08x\n", sp);
-    
     lwbt_init();
 
     bt_spp_start();
 
-    {
-        printf("I2C Test:\n\r");
-        I2C_Init();
-        
-        //printf("Read: ");
-
-        unsigned char res; //, data;
-        //res = I2C_Read(0x02, 0xAA, &data);
-
-        printf("Write: ");
-        res = I2C_Write(0x02, 0xAA, 0xBB);
-
-        printf("%02x\n\r", res);
-    }
-
-    //printf("Application started\n");
-
     timer_add(1000, SIG_TIMER);
-
-    //printf("We're going in...\n\n");
 
     static const SIGSELECT anysig[] = {0};
     for(;;) {

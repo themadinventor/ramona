@@ -5,6 +5,34 @@
  * 2012-07-25 <fredrik@etf.nu>
  */
 
+.thumb
+
+.global __irma_uidivmod
+.thumb_set __irma_uidivmod, 0x01040104
+
+.global __irma_idivmod
+.thumb_set __irma_idivmod, 0x0104021c
+
+.global __aeabi_uidivmod
+.global __aeabi_uidiv
+__aeabi_uidivmod:
+__aeabi_uidiv:
+    push    {r0}
+    mov     r0, r1
+    pop     {r1}
+    ldr     r2, =(__irma_uidivmod+1)
+    bx      r2
+
+.global __aeabi_idivmod
+.global __aeabi_idiv
+__aeabi_idivmod:
+__aeabi_idiv:
+    push    {r0}
+    mov     r0, r1
+    pop     {r1}
+    ldr     r2, =(__irma_idivmod+1)
+    bx      r2
+
 .global I2C_Init
 .thumb_set I2C_Init, 0x01010170
 
