@@ -1,17 +1,29 @@
-#define F_CPU 1000000UL
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <util/delay.h>
+
+#include "uart.h"
 
 int main(void)
 {
+    /* Status LED */
     DDRD = _BV(5);
 
-    while (1) {
-        PORTD |= _BV(5);
-        _delay_ms(50);
+    uart_init();
 
-        PORTD &= ~_BV(5);
-        _delay_ms(450);
+    /* Go for it! */
+    sei();
+
+    while (1) {
+        if (uart_rxlen() > 0) {
+            char c = uart_receive();
+        
+            if (c == 0x01) {
+                PORTD |= _BV(5);
+            } else if (c == 0x02) {
+                PORTD &= ~_BV(5);
+            }
+        }
     };
 }
 

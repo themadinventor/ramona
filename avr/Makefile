@@ -1,17 +1,21 @@
 TARGET  =ramona_avr
 MCU     =atmega88p
-OBJS    =main.o
+OBJS    =main.o uart.o
 
 CC      =avr-gcc
 OBJCOPY =avr-objcopy
 SIZE    =avr-size
 
-CFLAGS  =-g -Os -mmcu=$(MCU) -I. -Wall
+CFLAGS  =-g -Os -mmcu=$(MCU) -I. -Wall -DF_CPU=13000000UL
 
 all: $(TARGET).hex
 
 flash: $(TARGET).hex
 	avrdude -c avrftdi -p$(MCU) -U flash:w:$^
+
+fuse:
+	#avrdude -c avrftdi -p$(MCU) -U lfuse:w:0x62:m -U hfuse:w:0xdd:m -U efuse:w:0x01:m
+	avrdude -c avrftdi -p$(MCU) -U lfuse:w:0xcf:m -U hfuse:w:0xdd:m -U efuse:w:0x01:m
 
 size: $(OBJS)
 	$(SIZE) $(OBJS)
