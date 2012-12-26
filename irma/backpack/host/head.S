@@ -22,6 +22,9 @@ entry:                      /* +8: ROM jumps here */
     b       uart2_rx_int    /* +12: UART2 Rx Int */
 .int        backpackProc    /* +14: Process descriptor */
 .int        procmem+2048    /* +18: Process PCB */
+    b       Flash_Eraser    /* +1c: */
+    b       Flash_Handler   /* +1e: */
+    b       panic           /* +20: */
 
 .balign 0x40
     .ascii  "Ramona FW"     /* +40: Comment */

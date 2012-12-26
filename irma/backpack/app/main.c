@@ -60,13 +60,10 @@ const PROCINIT backpackProc = {
     .name = "backpack"
 };
 
-/*
- * IT'S A TRAP!
- */
 void div_by_zero(unsigned int dummy)
 {
-    UART2WriteString("\n\r\n\r####### IT'S A TRAP! #######\n\r\n\r");
-    UART2WriteString("Division by Zero.\n\r");
+    UART2WriteString("\n\r\n\r### Division by Zero ###\n\r");
+    UART2WriteString("Process halted.\n\r");
 
     unsigned int *ptr = &dummy;
     int i;
@@ -84,6 +81,36 @@ void div_by_zero(unsigned int dummy)
 
     UART2WriteString("\n\r#### End of stack trace ####\n\r");
     for (;;) ;
+}
+
+void panic(void)
+{
+    UART2WriteString("\n\r\n\r### OSE Crash ###\n\r");
+
+    UART2WriteString("code = ");
+    WriteHex(ose_crash_info.code);
+    UART2WriteString("\n\rpid  = ");
+    WriteHex(ose_crash_info.pid);
+    UART2WriteString("\n\rpcb  = ");
+    WriteHex(ose_crash_info.pcb);
+    UART2WriteString("\n\rsp   = ");
+    WriteHex(ose_crash_info.sp);
+    UART2WriteString("\n\rdom  = ");
+    WriteHex(ose_crash_info.domain);
+
+#if 1
+    UART2WriteString("\n\r\n\rSystem will reboot.\n\r");
+
+    // Provoke watchdog to reset IRMA
+    *((unsigned int *)0x00800c10) = 0x00;
+    *((unsigned int *)0x00800c0c) = 0xc0;
+    *((unsigned int *)0x00800c0c) = 0x18;
+
+    for (;;) ;
+#else
+    UART2WriteString("\n\r\n\rSystem will hang.\n\r");
+    for (;;) ;
+#endif
 }
 
 /*
@@ -104,11 +131,9 @@ void uart2_rx_int(int bytes)
 
 int lwbt_init(void)
 {
-    //printf("Initializing lwBT...\n");
     mem_init();
     memp_init();
     pbuf_init();
-    //printf("Memory management initialized\n");
 
     lwbt_memp_init();
     transport_init();
@@ -120,19 +145,18 @@ int lwbt_init(void)
     l2cap_init();
     sdp_init();
     rfcomm_init();
-    //printf("lwBT initialized\n");
+
     return 0;
 }
 
 void lwbt_timer(void)
 {
-    static int blink;
-    UART2PutChar(blink ? 0x01 : 0x02);
-    blink = !blink;
+    //static int blink;
+    UART2PutChar(0x03); //blink ? 0x01 : 0x02);
+    //blink = !blink;
 
 	l2cap_tmr();
 	rfcomm_tmr();
-	bt_spp_tmr();
 
     /*static int inquiry_timeout = 60;
     if ((inquiry_timeout) && (!(--inquiry_timeout))) {
@@ -204,7 +228,28 @@ void nolle_receive(unsigned char *data, unsigned char inlen)
 void bpMain(void)
 {
     printf("Ramona r.1 / IRMA build %s %s\n", build_time, build_comment);
-    //printf("Available RAM: %d bytes\n", 123456789);
+
+    /*
+    printf("NVDS:\n");
+    printf("  write = %08x, erase = %08x\n",
+            NVDS_Context.write, NVDS_Context.erase);
+    printf("  initd = %d, current_page = %d\n",
+            NVDS_Context.initialized, NVDS_Context.current_page);
+    printf("  tag = %08x, blob = %08x\n",
+            NVDS_Context.tag_head, NVDS_Context.blob_head);
+    printf("  free = %d, page = %d\n",
+            NVDS_Context.free_space, NVDS_Context.page_size);
+    printf("  pages at %08x and %08x\n",
+            NVDS_Context.pages[0], NVDS_Context.pages[1]);
+*/
+
+    //Flash_ErasePage(0x01060000);
+    printf("Writing to flash...");
+    char *str = "Testar flash, yeah!";
+    Flash_Write(0x01056000, str, 20);
+    printf("done\n");
+
+    printf("Now, it says %s\n", 0x01056000);
 
     lwbt_init();
 

@@ -133,16 +133,6 @@ void bt_spp_start(void)
 }
 
 /* 
- * bt_spp_tmr():
- *
- * Called by the main application to initialize and connect to a network
- *
- */
-void bt_spp_tmr(void)
-{
-}
-
-/* 
  * rfcomm_disconnected():
  *
  * Called by RFCOMM when the remote RFCOMM protocol or upper layer was disconnected.
@@ -743,9 +733,9 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 					if(result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Successful HCI_WRITE_COD.\n"));
                         sprintf(devname, "ramona-%02x%02x%02x",
-                                bt_spp_state.bdaddr.addr[0],
+                                bt_spp_state.bdaddr.addr[2],
                                 bt_spp_state.bdaddr.addr[1],
-                                bt_spp_state.bdaddr.addr[2]);
+                                bt_spp_state.bdaddr.addr[0]);
 						hci_change_local_name(devname, strlen(devname)+1);
 					} else {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Unsuccessful HCI_WRITE_COD.\n"));

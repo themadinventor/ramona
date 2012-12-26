@@ -32,10 +32,15 @@ p.sets(0x01010030, time.strftime('%Y-%m-%d %H:%M'))
 p.sets(0x01010050, '%s@%s' % (os.environ['USER'], os.uname()[1]))
 
 # Inject backpack
-p.splice('../backpack/backpack.bin', 0x01000000);
-#p.thumb_bl(0x01043232, 0x01000010); # init
-p.thumb_bl(0x01040334, 0x01000010); # divide by zero
-p.thumb_bl(0x0103dec6, 0x01000012); # uart2 rx int
+p.splice('../backpack/backpack.bin', 0x01000000)
+#p.thumb_bl(0x01043232, 0x01000010) # init
+p.thumb_bl(0x01040334, 0x01000010) # divide by zero
+p.thumb_bl(0x0103dec6, 0x01000012) # uart2 rx int
+
+p.setl(0x01043f8c, 0x0100001d) # flash eraser
+p.thumb_bl(0x010118f0, 0x0100001e) # flash handler
+p.setw(0x010118ee, 0x9802)
+p.setl(0x01042064, 0x01000021) # ose crash handler
 
 # Inject process descriptor
 pd = p.getl(0x01000014)

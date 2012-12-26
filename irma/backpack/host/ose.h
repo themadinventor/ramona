@@ -39,5 +39,8 @@ extern void OSE_free_buf(SIGNAL **s);
 extern SIGNAL *OSE_receive(SIGSELECT *sigsel);
 extern void OSE_send(SIGNAL **sig, PROCESS to);
 extern unsigned int OSE_get_ticks(void);
+extern PROCESS OSE_sender(SIGNAL **sig);
+
+extern void OSE_UserError(unsigned int errno);
 
 #endif

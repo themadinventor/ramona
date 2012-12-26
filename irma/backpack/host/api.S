@@ -66,8 +66,14 @@ __aeabi_idiv:
 .global OSE_send
 .thumb_set OSE_send, 0x01043bb8
 
+.global OSE_sender
+.thumb_set OSE_sender, 0x01043cb4
+
 .global OSE_get_ticks
 .thumb_set OSE_get_ticks, 0x010430d4
+
+.global OSE_UserError
+.thumb_set OSE_UserError, 0x01042784
 
 .global timer_add
 .thumb_set timer_add, 0x01010ad4
@@ -75,8 +81,20 @@ __aeabi_idiv:
 .global proc_hci
 .set proc_hci, 0x0000de4c
 
+.global proc_flash_eraser
+.set proc_flash_eraser, 0x0000df38
+
+.global proc_flash_handler
+.set proc_flash_handler, 0x0000c46c
+
 .global build_time
 .set build_time, 0x01010030
 
 .global build_comment
 .set build_comment, 0x01010050
+
+.global NVDS_Context
+.set NVDS_Context, 0x000006A4
+
+.global ose_crash_info
+.set ose_crash_info, 0x7218
