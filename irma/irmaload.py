@@ -11,10 +11,26 @@ import struct
 import hashlib
 import time
 
+import mpsse
+
+class AVRSilencer:
+
+    def __init__(self):
+        self.m = mpsse.MPSSE(mpsse.BITBANG)
+
+    def reset(self):
+        self.m.PinLow(3)
+
+    def release(self):
+        self.m.PinHigh(3)
+
 class IRMAFlasher:
 
     def __init__(self, port = '/dev/ttyUSB0', boot = True):
         self.s = serial.Serial(port, 9600, timeout = 0.01)
+
+        self.avr = AVRSilencer()
+        self.avr.reset()
 
         self.connect()
         #self.fastload()
@@ -30,6 +46,7 @@ class IRMAFlasher:
             self.set_baud(460800)
         else:
             self.release()
+            self.avr.release()
 
     def blobhash(self, filename):
         b = file(filename).read()
@@ -316,6 +333,7 @@ class IRMAFlasher:
 
         print 'Rebooting...'
         self.leave()
+        self.avr.release()
 
 def usage():
     print 'Usage: %s [flash|run]' % sys.argv[0]
@@ -326,8 +344,12 @@ if __name__ == '__main__':
         usage()
 
     if sys.argv[1] == 'flash':
-        f = IRMAFlasher()
-        f.flash('flash_rok101008_nodfu.bin')
+        if len(sys.argv) < 3:
+            print 'Expected file name.'
+            sys.exit(1)
+        else:
+            f = IRMAFlasher()
+            f.flash(sys.argv[2])
     elif sys.argv[1] == 'run':
         f = IRMAFlasher(boot = False)
     elif sys.argv[1] == 'reset':
@@ -341,4 +363,4 @@ if __name__ == '__main__':
         print 'Unknown operation: %s' % sys.argv[1]
         usage()
 
-    f.terminal()
+    f.terminal(115200)
