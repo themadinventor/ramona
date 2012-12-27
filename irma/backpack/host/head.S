@@ -16,15 +16,16 @@ entry:                      /* +8: ROM jumps here */
     nop
     bl      start
 
-/* Secret header */
+/* Secret header * /
 .thumb
-    b       div_by_zero     /* +10: Divide by zero */
-    b       uart2_rx_int    /* +12: UART2 Rx Int */
-.int        backpackProc    /* +14: Process descriptor */
-.int        procmem+2048    /* +18: Process PCB */
-    b       Flash_Eraser    /* +1c: */
-    b       Flash_Handler   /* +1e: */
-    b       panic           /* +20: */
+    b       div_by_zero     / * +10: Divide by zero * /
+    b       uart2_rx_int    / * +12: UART2 Rx Int * /
+.int        backpackProc    / * +14: Process descriptor * /
+.int        procmem+2048    / * +18: Process PCB * /
+    b       Flash_Eraser    / * +1c: Flash_Eraser implementation * /
+    b       Flash_Handler   / * +1e: Flash_Handler hook * /
+    b       panic           / * +20: OSE Crash hook * /
+    */
 
 .balign 0x40
     .ascii  "Ramona FW"     /* +40: Comment */
@@ -38,7 +39,7 @@ start:
     bx      r0
 .thumb
 thumb:
-    ldr     r0, =0x2600
+    ldr     r0, =0x2600     /* Temporary thumb stack */
     mov     sp, r0
     bl      InitDataZeroBSS
     ldr     r0, =arm

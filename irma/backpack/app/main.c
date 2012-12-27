@@ -9,9 +9,10 @@
 #include "host/app.h"
 
 #include "uart.h"
-#include "transport.h"
 #include "utils.h"
 #include "signals.h"
+#include "btstack.h"
+#include "transport.h"
 
 #include <stdio.h>
 
@@ -28,10 +29,9 @@
 
 void bpMain(void);
 
-//extern void InitHW(void);
-extern void bt_spp_start(void);
+/*extern void bt_spp_start(void);
 extern void bt_spp_tmr(void);
-extern void spp_write(char *buf, int len);
+extern void spp_write(char *buf, int len);*/
 
 // use a struct to make sure they stay in order.
 // failing to do so will result in crashes or undefined behaviour,
@@ -129,41 +129,7 @@ void uart2_rx_int(int bytes)
     OSE_send(&s, PID_BACKPACK);
 }
 
-int lwbt_init(void)
-{
-    mem_init();
-    memp_init();
-    pbuf_init();
-
-    lwbt_memp_init();
-    transport_init();
-    if (hci_init() != ERR_OK) {
-        printf("HCI initialization failed\n");
-        return -1;
-    }
-
-    l2cap_init();
-    sdp_init();
-    rfcomm_init();
-
-    return 0;
-}
-
-void lwbt_timer(void)
-{
-    //static int blink;
-    UART2PutChar(0x03); //blink ? 0x01 : 0x02);
-    //blink = !blink;
-
-	l2cap_tmr();
-	rfcomm_tmr();
-
-    /*static int inquiry_timeout = 60;
-    if ((inquiry_timeout) && (!(--inquiry_timeout))) {
-        hci_write_scan_enable(HCI_SCAN_EN_PAGE);
-    }*/
-}
-
+/*
 void nolle_transmit(unsigned char type, void *data, unsigned char len)
 {
 #if 0
@@ -220,7 +186,7 @@ void nolle_receive(unsigned char *data, unsigned char inlen)
             idx = 0;
         }
     }
-}
+}*/
 
 /*
  * This is the entry point of our thread
@@ -243,7 +209,7 @@ void bpMain(void)
             NVDS_Context.pages[0], NVDS_Context.pages[1]);
 */
 
-    //Flash_ErasePage(0x01060000);
+    /*
     printf("Writing to flash...");
     char *str = "Testar flash, yeah!";
     Flash_Write(0x01056000, str, 20);
@@ -251,9 +217,13 @@ void bpMain(void)
 
     printf("Now, it says %s\n", 0x01056000);
 
-    lwbt_init();
+    printf("Erasing flash...");
+    Flash_ErasePage(0x01056000);
+    printf("done\n");
+    printf("Now, it's %02x\n", *((unsigned char *)0x01056000));
+*/
 
-    bt_spp_start();
+    lwbt_init();
 
     timer_add(1000, SIG_TIMER);
 
@@ -263,6 +233,7 @@ void bpMain(void)
 
         switch (s->sig_no) {
         case SIG_TIMER:
+            UART2PutChar(0x03);
             lwbt_timer();
             timer_add(1000, SIG_TIMER);
             break;
@@ -274,7 +245,7 @@ void bpMain(void)
 
         case SIG_UART_RX:
             //spp_write(&s->raw[3], s->raw[2]);
-            nolle_receive(&s->raw[3], s->raw[2]);
+            //nolle_receive(&s->raw[3], s->raw[2]);
             break;
 
         default:

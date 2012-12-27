@@ -2,6 +2,7 @@ TOOLCHAIN = arm-none-eabi
 CC = $(TOOLCHAIN)-gcc
 LD = $(TOOLCHAIN)-ld
 OBJCOPY = $(TOOLCHAIN)-objcopy
+NM = $(TOOLCHAIN)-nm
 LDNAME = irma_lo.ld
 CFLAGS =-mcpu=arm7tdmi -mthumb -I. -I./lwbt/ -I ./fulibc/inc/ -I ./utils/ -I ./app/ -std=gnu99 -nostdlib -nostdinc -fno-builtin -Wcast-align -g
 
@@ -20,3 +21,5 @@ clean:
 backpack.elf: ${APP} ${HOST} ${UTILS} ${LWBT} ${LWIP} ${FULIBC}
 	${LD} -T ${LDNAME} -g -o $@ $^
 	${OBJCOPY} -O binary $@ ${@:.elf=.bin}
+	${NM} -n $@ > ${@:.elf=.sym}
+
