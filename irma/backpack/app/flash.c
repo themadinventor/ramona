@@ -11,33 +11,10 @@
 
 #include <stdio.h>
 
-/*void Flash_Handler(void)
-{
-    const SIGSELECT anysig[] = {0};
-
-    for (;;) {
-        SIGNAL *s = OSE_receive((SIGSELECT *) anysig);
-
-        switch (s->sig_no) {
-        case SIG_NVDS_WRITE:
-            break;
-
-        case SIG_NVDS_READ:
-            break;
-
-        case SIG_NVDS_DELETE:
-            break;
-
-        default:
-            OSE_UserError(0x20);
-        }
-    }
-}*/
-
 void Flash_Handler(SIGNAL *s)
 {
     if (s->sig_no == SIG_FLASH_WRITE) {
-        struct sig_write *p = (void *) s;
+        struct sig_flash_write *p = (void *) s;
 
         // Unlock flash (wtf?!)
         *((unsigned int *)0x00800314) &= 0xef;
@@ -74,7 +51,7 @@ void Flash_Eraser(void)
 
         case SIG_FLASH_ERASE:
             {
-                struct sig_erase *p = (void *) s;
+                struct sig_flash_erase *p = (void *) s;
                 
                 // Unlock flash (wtf?!)
                 *((unsigned int *)0x00800314) &= 0xef;
@@ -97,8 +74,8 @@ void Flash_Eraser(void)
 
 void Flash_ErasePage(void *addr)
 {
-    SIGNAL *s = OSE_alloc(sizeof(struct sig_erase), SIG_FLASH_ERASE);
-    struct sig_erase *p = (void *) s;
+    SIGNAL *s = OSE_alloc(sizeof(struct sig_flash_erase), SIG_FLASH_ERASE);
+    struct sig_flash_erase *p = (void *) s;
     p->addr = addr;
     OSE_send(&s, proc_flash_eraser);
 
@@ -109,8 +86,8 @@ void Flash_ErasePage(void *addr)
 
 void Flash_Write(void *dst, void *src, size_t len)
 {
-    SIGNAL *s = OSE_alloc(sizeof(struct sig_write), SIG_FLASH_WRITE);
-    struct sig_write *p = (void *) s;
+    SIGNAL *s = OSE_alloc(sizeof(struct sig_flash_write), SIG_FLASH_WRITE);
+    struct sig_flash_write *p = (void *) s;
     p->dst = dst;
     p->src = src;
     p->len = len;

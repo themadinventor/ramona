@@ -35,32 +35,20 @@ p.sets(0x01010050, '%s@%s' % (os.environ['USER'], os.uname()[1]))
 
 # Inject backpack
 p.splice('../backpack/backpack.bin', 0x01000000)
-##p.thumb_bl(0x01043232, 0x01000010) # init
-#p.thumb_bl(0x01040334, 0x01000010) # divide by zero
 p.thumb_bl(0x01040334, s.syms['div_by_zero']) # divide by zero
-#p.thumb_bl(0x0103dec6, 0x01000012) # uart2 rx int
 p.thumb_bl(0x0103dec6, s.syms['uart2_rx_int']) # uart2 rx int
 
-#p.setl(0x01043f8c, 0x0100001d) # flash eraser
 p.setl(0x01043f8c, s.syms['Flash_Eraser']+1) # flash eraser
 
-#p.thumb_bl(0x010118f0, 0x0100001e) # flash handler
 p.thumb_bl(0x010118f0, s.syms['Flash_Handler']) # flash handler
 p.setw(0x010118ee, 0x9802)
 
-#p.setl(0x01042064, 0x01000021) # ose crash handler
 p.setl(0x01042064, s.syms['panic']) # ose crash handler
 
 # Inject process descriptor
-#pd = p.getl(0x01000014)
-#print 'Descriptor at %08x' % pd
-#p.setl(0x01043da4, pd)
 p.setl(0x01043da4, s.syms['backpackProc'])
 
 # Register process PCB
-#pcb = p.getl(0x01000018)
-#print 'PCB at %08x' % pcb
-#p.setl(0x01043d48, pcb)
 p.setl(0x01043d48, s.syms['procmem']+2048)
 
 # Save firmware hash in header

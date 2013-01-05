@@ -1,8 +1,9 @@
-#include "btstack.h"
-
 #include "host/ose.h"
 #include "host/app.h"
 #include "transport.h"
+
+#include "btstack.h"
+#include "signals.h"
 
 #include "lwip/mem.h"
 #include "lwip/memp.h"
@@ -18,6 +19,8 @@
 
 #define BT_SPP_DEBUG LWIP_DBG_OFF /* Controls debug messages */
 
+// Ramona Control: ea5cf8a3-833d-4d61-bfec-9cf6f4230ac4
+
 static const u8_t ramona_service_record[] =
 {
 		SDP_DES_SIZE8, 0x8, 
@@ -26,16 +29,11 @@ static const u8_t ramona_service_record[] =
 		SDP_DES_SIZE8, 0x16, 
 			SDP_UINT16, 0x0, 0x1, /* Service class ID list attribute */
 			SDP_DES_SIZE8, 17,
-				SDP_UUID128, 0x53, 0xc6, 0x0a, 0x67,
-                    0xb9, 0x1d,
-                    0x48, 0x8d,
-                    0xa0, 0xc6,
-                    0xb7, 0x0c, 0x75, 0x2a, 0x74, 0x47,
-                    /*0x00, 0x00, 0x00, 0x00,
-					0xde, 0xca,
-					0xfa, 0xde,
-					0xde, 0xca,
-					0xde, 0xaf, 0xde, 0xca, 0xca, 0xff,*/
+				SDP_UUID128, 0xea, 0x5c, 0xf8, 0xa3,
+                    0x83, 0x3d,
+                    0x4d, 0x61,
+                    0xbf, 0xec,
+                    0x9c, 0xf6, 0xf4, 0x23, 0x0a, 0xc4,
 		SDP_DES_SIZE8, 0x11,
 			SDP_UINT16, 0x0, 0x4, /* Protocol descriptor list attribute */
 			SDP_DES_SIZE8, 0xc, 
@@ -50,14 +48,17 @@ static const u8_t ramona_service_record[] =
 				SDP_UUID16, 0x10, 0x02, /*PublicBrowseGroup*/
 };
 
-struct rfcomm_pcb *spp_pcb;
-
 struct bt_state {
 	struct bd_addr bdaddr;
 	struct pbuf *p;
 	u8_t btctrl;
 	u8_t cn;
 } bt_spp_state;
+
+const char *get_bdaddr(void)
+{
+    return (const char *)&bt_spp_state.bdaddr;
+}
 
 err_t pin_req(void *arg, struct bd_addr *bdaddr)
 {
@@ -73,7 +74,11 @@ err_t spp_recv(void *arg, struct rfcomm_pcb *pcb, struct pbuf *p, err_t err)
 	LWIP_DEBUGF(BT_SPP_DEBUG, ("spp_recv: p->len == %d p->tot_len == %d\n", p->len, p->tot_len));
 
 	for (q = p; q != NULL; q = q->next) {
-        //nolle_transmit(0x03, (u8_t*)q->payload, q->len);
+        struct sig_bt_received *s = (void *) OSE_alloc(sizeof(struct sig_bt_received)+q->len, SIG_BT_RECEIVED);
+        s->pcb = pcb;
+        s->len = q->len;
+        memcpy(s->data, q->payload, q->len);
+        OSE_send((SIGNAL **) &s, PID_BACKPACK);
 	}
 	
     pbuf_free(p);
@@ -81,43 +86,34 @@ err_t spp_recv(void *arg, struct rfcomm_pcb *pcb, struct pbuf *p, err_t err)
 	return ERR_OK;
 }
 
-void spp_write(char *buf, int len)
+void spp_write(struct rfcomm_pcb *pcb, char *buf, int len)
 {
-    if (!spp_pcb) {
-        return;
-    }
-
 	struct pbuf *q = pbuf_alloc(PBUF_RAW, len, PBUF_RAM);
     memcpy(q->payload, buf, len);
 
-	if (rfcomm_cl(spp_pcb)) {
-        rfcomm_uih_credits(spp_pcb, PBUF_POOL_SIZE - rfcomm_remote_credits(spp_pcb), q);
+	if (rfcomm_cl(pcb)) {
+        rfcomm_uih_credits(pcb, PBUF_POOL_SIZE - rfcomm_remote_credits(pcb), q);
 	} else {
-		rfcomm_uih(spp_pcb, rfcomm_cn(spp_pcb), q);
+		rfcomm_uih(pcb, rfcomm_cn(pcb), q);
 	}
 	pbuf_free(q);
 }
 
-void spp_disconnect(void)
+void spp_disconnect(struct rfcomm_pcb *pcb)
 {
-    if (!spp_pcb) {
-        return;
-    }
-
-    rfcomm_disconnect(spp_pcb);
+    rfcomm_disconnect(pcb);
 }
 
 err_t rfcomm_disconnected(void *arg, struct rfcomm_pcb *pcb, err_t err) 
 {
 	err_t ret = ERR_OK;
 
-    spp_pcb = NULL;
-
-    //printf("Disconnected, cl=%02x, %x\n", pcb->cl, rfcomm_cl(pcb));
-    //nolle_transmit(0x02, NULL, 0);
+    struct sig_bt_disconnected *s = (void *) OSE_alloc(sizeof(struct sig_bt_disconnected), SIG_BT_DISCONNECTED);
+    s->pcb = pcb;
+    OSE_send((SIGNAL **) &s, PID_BACKPACK);
 
 	LWIP_DEBUGF(BT_SPP_DEBUG, ("rfcomm_disconnected: CN = %d\n", rfcomm_cn(pcb)));
-	if(rfcomm_cn(pcb) != 0) {
+	if (rfcomm_cn(pcb) != 0) {
 		; //ppp_lp_disconnected(pcb);
 	}
 	rfcomm_close(pcb);
@@ -130,33 +126,14 @@ err_t rfcomm_accept(void *arg, struct rfcomm_pcb *pcb, err_t err)
 	LWIP_DEBUGF(BT_SPP_DEBUG, ("rfcomm_accept: CN = %d\n", rfcomm_cn(pcb)));
 
 	rfcomm_disc(pcb, rfcomm_disconnected);
-	if(pcb->cn != 0) {
+	if (pcb->cn != 0) {
 		//set recv callback
 		rfcomm_recv(pcb, spp_recv);
 
-        //printf("Incoming connection, cl=%02x, %x\n", pcb->cl, rfcomm_cl(pcb));
-        /*{
-            unsigned char buf[32];
-            unsigned char *addr = pcb->l2cappcb->remote_bdaddr.addr;
-            sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x", addr[5], addr[4], addr[3],
-                    addr[2], addr[1], addr[0]);
-            nolle_transmit(0x01, buf, strlen(buf));
-        }*/
-
-	    /*struct pbuf *q = NULL;
-        char str[] = "IRMA backpack säger hej!\n";
-	    q = pbuf_alloc(PBUF_RAW, strlen(str), PBUF_RAM);
-        memcpy(q->payload, str, strlen(str));*/
-
-	    //if (rfcomm_cl(pcb)) {
-		//    rfcomm_uih_credits(pcb, PBUF_POOL_SIZE - rfcomm_remote_credits(pcb), q);
-	    //} else {
-		//    rfcomm_uih(pcb, rfcomm_cn(pcb), q);
-	    //}
-	    //pbuf_free(q);
+        struct sig_bt_accepted *s = (void *) OSE_alloc(sizeof(struct sig_bt_accepted), SIG_BT_ACCEPTED);
+        s->pcb = pcb;
+        OSE_send((SIGNAL **) &s, PID_BACKPACK);
 	}
-
-    spp_pcb = pcb;
 
 	return ERR_OK;
 }
@@ -167,9 +144,9 @@ static err_t bt_disconnect_ind(void *arg, struct l2cap_pcb *pcb, err_t err)
 
 	LWIP_DEBUGF(BT_SPP_DEBUG, ("bt_disconnect_ind\n"));
 
-	if(pcb->psm == SDP_PSM) { 
+	if (pcb->psm == SDP_PSM) { 
 		sdp_lp_disconnected(pcb);
-	} else if(pcb->psm == RFCOMM_PSM) {
+	} else if (pcb->psm == RFCOMM_PSM) {
 		ret = rfcomm_lp_disconnected(pcb);
 	}
 
@@ -185,7 +162,7 @@ err_t bt_connect_ind(void *arg, struct l2cap_pcb *pcb, err_t err)
 	l2cap_disconnect_ind(pcb, bt_disconnect_ind);
 
 	/* Tell L2CAP that we wish to be informed of incoming data */
-	if(pcb->psm == SDP_PSM) {
+	if (pcb->psm == SDP_PSM) {
 		l2cap_recv(pcb, sdp_recv);
 	} else if (pcb->psm == RFCOMM_PSM) {
 		l2cap_recv(pcb, rfcomm_input);
@@ -199,33 +176,40 @@ err_t bt_spp_init(void)
 	struct rfcomm_pcb *rfcommpcb;
 	struct sdp_record *record;
 
-	if((l2cappcb = l2cap_new()) == NULL) {
+	if ((l2cappcb = l2cap_new()) == NULL) {
 		LWIP_DEBUGF(BT_SPP_DEBUG, ("bt_spp_init: Could not alloc L2CAP PCB for SDP_PSM\n"));
 		return ERR_MEM;
 	}
 	l2cap_connect_ind(l2cappcb, SDP_PSM, bt_connect_ind);
 
-	if((l2cappcb = l2cap_new()) == NULL) {
+	if ((l2cappcb = l2cap_new()) == NULL) {
 		LWIP_DEBUGF(BT_SPP_DEBUG, ("bt_spp_init: Could not alloc L2CAP PCB for RFCOMM_PSM\n"));
 		return ERR_MEM;
 	}
 	l2cap_connect_ind(l2cappcb, RFCOMM_PSM, bt_connect_ind);
 
 	LWIP_DEBUGF(RFCOMM_DEBUG, ("bt_spp_init: Allocate RFCOMM PCB for CN 0\n"));
-	if((rfcommpcb = rfcomm_new(NULL)) == NULL) {
+	if ((rfcommpcb = rfcomm_new(NULL)) == NULL) {
 		LWIP_DEBUGF(BT_SPP_DEBUG, ("bt_spp_init: Could not alloc RFCOMM PCB for channel 0\n"));
 		return ERR_MEM;
 	}
 	rfcomm_listen(rfcommpcb, 0, rfcomm_accept);
 
 	LWIP_DEBUGF(RFCOMM_DEBUG, ("bt_spp_init: Allocate RFCOMM PCB for CN 1\n"));
-	if((rfcommpcb = rfcomm_new(NULL)) == NULL) {
+	if ((rfcommpcb = rfcomm_new(NULL)) == NULL) {
 		LWIP_DEBUGF(BT_SPP_DEBUG, ("lap_init: Could not alloc RFCOMM PCB for channel 1\n"));
 		return ERR_MEM;
 	}
 	rfcomm_listen(rfcommpcb, 1, rfcomm_accept);
 
-	if((record = sdp_record_new((u8_t *)ramona_service_record, sizeof(ramona_service_record))) == NULL) {
+	/*LWIP_DEBUGF(RFCOMM_DEBUG, ("bt_spp_init: Allocate RFCOMM PCB for CN 2\n"));
+	if((rfcommpcb = rfcomm_new(NULL)) == NULL) {
+		LWIP_DEBUGF(BT_SPP_DEBUG, ("lap_init: Could not alloc RFCOMM PCB for channel 2\n"));
+		return ERR_MEM;
+	}
+	rfcomm_listen(rfcommpcb, 2, rfcomm_accept);*/
+
+	if ((record = sdp_record_new((u8_t *)ramona_service_record, sizeof(ramona_service_record))) == NULL) {
 		LWIP_DEBUGF(BT_SPP_DEBUG, ("bt_spp_init: Could not alloc SDP record\n"));
 		return ERR_MEM;
 	} else {
@@ -256,14 +240,6 @@ err_t read_bdaddr_complete(void *arg, struct bd_addr *bdaddr)
 				bdaddr->addr[5], bdaddr->addr[4], bdaddr->addr[3],
 				bdaddr->addr[2], bdaddr->addr[1], bdaddr->addr[0]));
 
-    /*{
-        unsigned char buf[32];
-        unsigned char *addr = bdaddr->addr;
-        sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x", addr[5], addr[4], addr[3],
-                addr[2], addr[1], addr[0]);
-        nolle_transmit(0x06, buf, strlen(buf));
-    }*/
-
     return ERR_OK;
 }
 
@@ -275,11 +251,11 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 	u8_t n1, n2, n3;
 	u8_t flag = HCI_SET_EV_FILTER_AUTOACC_NOROLESW; //HCI_SET_EV_FILTER_AUTOACC_ROLESW;
 
-	switch(ogf) {
+	switch (ogf) {
 		case HCI_INFO_PARAM:
-			switch(ocf) {
+			switch (ocf) {
 				case HCI_READ_BUFFER_SIZE:
-					if(result == HCI_SUCCESS) {
+					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("successful HCI_READ_BUFFER_SIZE.\n"));
 						hci_read_bd_addr(read_bdaddr_complete);
 					} else {
@@ -288,7 +264,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 					}
 					break;
 				case HCI_READ_BD_ADDR:
-					if(result == HCI_SUCCESS) {
+					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("successful HCI_READ_BD_ADDR.\n"));
 						/* Make discoverable */
 						hci_set_event_filter(HCI_SET_EV_FILTER_CONNECTION,
@@ -304,9 +280,9 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 			}
 			break;
 		case HCI_HC_BB_OGF:
-			switch(ocf) {
+			switch (ocf) {
 				case HCI_RESET:
-					if(result == HCI_SUCCESS) {
+					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("successful HCI_RESET.\n")); 
 						hci_read_buffer_size();
 					} else {
@@ -315,7 +291,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 					}
 					break;
 				case HCI_WRITE_SCAN_ENABLE:
-					if(result == HCI_SUCCESS) {
+					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("successful HCI_WRITE_SCAN_ENABLE.\n")); 
 						//hci_cmd_complete(NULL); /* Initialization done, don't come back */
 					} else {
@@ -324,7 +300,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 					}
 					break;
 				case HCI_SET_EVENT_FILTER:
-					if(result == HCI_SUCCESS) {
+					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("successful HCI_SET_EVENT_FILTER.\n"));
 							hci_write_cod(cod_spp);
 							hci_write_scan_enable(HCI_SCAN_EN_INQUIRY | HCI_SCAN_EN_PAGE);
@@ -334,7 +310,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 					}
 					break;
 				case HCI_CHANGE_LOCAL_NAME:
-					if(result == HCI_SUCCESS) {
+					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Successful HCI_CHANGE_LOCAL_NAME.\n"));
 						hci_write_page_timeout(0x4000); /* 10.24s */
 					} else {
@@ -343,7 +319,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 					}
 					break;
 				case HCI_WRITE_COD:
-					if(result == HCI_SUCCESS) {
+					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Successful HCI_WRITE_COD.\n"));
                         sprintf(devname, "ramona-%02x%02x%02x",
                                 bt_spp_state.bdaddr.addr[2],
@@ -356,7 +332,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 					}
 					break;
 				case HCI_WRITE_PAGE_TIMEOUT:
-					if(result == HCI_SUCCESS) {
+					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("successful HCI_WRITE_PAGE_TIMEOUT.\n"));
 						//hci_cmd_complete(NULL); /* Initialization done, don't come back */
 						hci_connection_complete(acl_conn_complete);
