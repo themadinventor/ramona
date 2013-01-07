@@ -11,7 +11,6 @@
 #include "uart.h"
 #include "utils.h"
 #include "signals.h"
-#include "btstack.h"
 #include "transport.h"
 
 #include <stdio.h>
@@ -26,6 +25,8 @@
 #include "lwip/mem.h"
 #include "lwip/sys.h"
 #include "lwip/stats.h"
+
+#include "btstack.h"
 
 void bpMain(void);
 
@@ -73,19 +74,6 @@ void uart2_rx_int(int bytes)
     OSE_send(&s, PID_BACKPACK);
 }
 
-void monitor_greeting(struct rfcomm_pcb *pcb)
-{
-    char buf[64];
-    sprintf(buf, "Ramona Monitor\nIRMA Build: %s, %s\n\r",
-            build_time, build_comment);
-    spp_write(pcb, buf, strlen(buf));
-
-    const char *addr = get_bdaddr();
-    sprintf(buf, "BDADDR: %02x:%02x:%02x:%02x:%02x:%02x\n\r\n\r",
-		    addr[5], addr[4], addr[3],
-			addr[2], addr[1], addr[0]);
-    spp_write(pcb, buf, strlen(buf));
-}
 
 /*
  * This is the entry point of our thread
@@ -122,6 +110,7 @@ void bpMain(void)
     */
 
     lwbt_init();
+    monitor_init();
 
     timer_add(1000, SIG_TIMER);
 
@@ -146,7 +135,7 @@ void bpMain(void)
             //nolle_receive(&s->raw[3], s->raw[2]);
             break;
 
-        case SIG_BT_ACCEPTED:
+        /*case SIG_BT_ACCEPTED:
             {
                 struct sig_bt_accepted *p = (void *) s;
                 printf("Accepted connection to cn=%d\n", rfcomm_cn(p->pcb));
@@ -171,7 +160,7 @@ void bpMain(void)
                 }
                 printf("\n");
             }
-            break;
+            break;*/
 
         default:
             printf("unhandled signal %08x\n", s->sig_no);

@@ -10,10 +10,10 @@
 #define SIG_FLASH_ERASE     0xc004
 #define SIG_FLASH_WRITE     0xc005
 #define SIG_FLASH_COMPLETE  0xc006
-#define SIG_BT_ACCEPTED     0xc007
+/*#define SIG_BT_ACCEPTED     0xc007
 #define SIG_BT_DISCONNECTED 0xc008
 #define SIG_BT_RECEIVED     0xc009
-#define SIG_BT_SEND         0xc00a
+#define SIG_BT_SEND         0xc00a*/
 
 struct sig_flash_erase {
     SIGSELECT sig_no;
@@ -26,7 +26,7 @@ struct sig_flash_write {
     size_t len;
 };
 
-struct sig_bt_accepted {
+/*struct sig_bt_accepted {
     SIGSELECT sig_no;
     struct rfcomm_pcb *pcb;
 };
@@ -48,6 +48,6 @@ struct sig_bt_send {
     struct rfcomm_pcb *pcb;
     size_t len;
     char data[0];
-};
+};*/
 
 #endif

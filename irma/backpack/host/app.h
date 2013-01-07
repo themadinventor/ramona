@@ -27,6 +27,10 @@ extern void I2C_Init();
 extern int I2C_Read(unsigned char chip_id, unsigned char address, unsigned char *data);
 extern int I2C_Write(unsigned char chip_id, unsigned char address, unsigned char data);
 
+extern int NVDS_ReadFile(unsigned char tag, size_t len, void *ptr);
+extern void NVDS_WriteFile(unsigned char tag, size_t len, void *ptr);
+extern void NVDS_DeleteFile(unsigned char tag);
+
 extern PROCESS proc_hci, proc_flash_eraser, proc_flash_handler;
 extern char build_time[];
 extern char build_comment[];
