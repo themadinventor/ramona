@@ -30,6 +30,7 @@ start:
 thumb:
     ldr     r0, =0x2600     /* Temporary thumb stack */
     mov     sp, r0
+    bl      TryFirmwareUpgrade
     bl      InitDataZeroBSS
     ldr     r0, =arm
     bx      r0

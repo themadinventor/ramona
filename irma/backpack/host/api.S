@@ -98,3 +98,6 @@ __aeabi_idiv:
 
 .global ose_crash_info
 .set ose_crash_info, 0x7218
+
+.global ROM_CRC16
+.thumb_set ROM_CRC16, 0x00c00624

@@ -23,6 +23,8 @@ extern void HCI_Trans_ACL_Sent(int interface);
 
 extern void timer_add(int seconds, SIGSELECT signal);
 
+extern unsigned short ROM_CRC16(void *ptr, unsigned int len, unsigned short crc);
+
 extern void I2C_Init();
 extern int I2C_Read(unsigned char chip_id, unsigned char address, unsigned char *data);
 extern int I2C_Write(unsigned char chip_id, unsigned char address, unsigned char data);

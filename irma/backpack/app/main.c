@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "signals.h"
 #include "transport.h"
+#include "plugin.h"
 
 #include <stdio.h>
 
@@ -57,7 +58,6 @@ const PROCINIT backpackProc = {
     .name = "backpack"
 };
 
-
 /*
  * This gets called through the OSE interrupt handling mechanism.
  */
@@ -80,37 +80,12 @@ void uart2_rx_int(int bytes)
  */
 void bpMain(void)
 {
-    //printf("Ramona r.1 / IRMA build %s %s\n", build_time, build_comment);
-
-    /*
-    printf("NVDS:\n");
-    printf("  write = %08x, erase = %08x\n",
-            NVDS_Context.write, NVDS_Context.erase);
-    printf("  initd = %d, current_page = %d\n",
-            NVDS_Context.initialized, NVDS_Context.current_page);
-    printf("  tag = %08x, blob = %08x\n",
-            NVDS_Context.tag_head, NVDS_Context.blob_head);
-    printf("  free = %d, page = %d\n",
-            NVDS_Context.free_space, NVDS_Context.page_size);
-    printf("  pages at %08x and %08x\n",
-            NVDS_Context.pages[0], NVDS_Context.pages[1]);
-*/
-
-    /*printf("Writing to flash...");
-    char *str = "Testar flash, yeah!";
-    Flash_Write(0x01056000, str, 20);
-    printf("done\n");
-
-    printf("Now, it says %s\n", 0x01056000);
-
-    printf("Erasing flash...");
-    Flash_ErasePage(0x01056000);
-    printf("done\n");
-    printf("Now, it's %02x\n", *((unsigned char *)0x01056000));
-    */
-
     lwbt_init();
     monitor_init();
+
+    plugin_enable();
+
+    //I2C_Init();
 
     timer_add(1000, SIG_TIMER);
 
@@ -120,7 +95,10 @@ void bpMain(void)
 
         switch (s->sig_no) {
         case SIG_TIMER:
-            UART2PutChar(0x03);
+            //UART2PutChar(0x03);
+            
+            //I2C_Write(2, 1, 3);
+
             lwbt_timer();
             timer_add(1000, SIG_TIMER);
             break;
@@ -134,33 +112,6 @@ void bpMain(void)
             //spp_write(&s->raw[3], s->raw[2]);
             //nolle_receive(&s->raw[3], s->raw[2]);
             break;
-
-        /*case SIG_BT_ACCEPTED:
-            {
-                struct sig_bt_accepted *p = (void *) s;
-                printf("Accepted connection to cn=%d\n", rfcomm_cn(p->pcb));
-                monitor_greeting(p->pcb);
-            }
-            break;
-
-        case SIG_BT_DISCONNECTED:
-            {
-                struct sig_bt_disconnected *p = (void *) s;
-                printf("Disconnected from cn=%d\n", rfcomm_cn(p->pcb));
-            }
-            break;
-
-        case SIG_BT_RECEIVED:
-            {
-                struct sig_bt_received *p = (void *) s;
-                char *c = p->data;
-                printf("Received %d bytes on cn=%d\n: ", p->len, rfcomm_cn(p->pcb));
-                while (p->len--) {
-                    printf("%c", *c++);
-                }
-                printf("\n");
-            }
-            break;*/
 
         default:
             printf("unhandled signal %08x\n", s->sig_no);

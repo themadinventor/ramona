@@ -47,12 +47,6 @@ err_t bt_rfcomm_recv(void *arg, struct rfcomm_pcb *pcb, struct pbuf *p, err_t er
 	for (q = p; q != NULL; q = q->next) {
         rfcommproc_t proc = arg;
         proc(pcb, RFCOMM_RECEIVED, q->payload, q->len);
-        
-        /*struct sig_bt_received *s = (void *) OSE_alloc(sizeof(struct sig_bt_received)+q->len, SIG_BT_RECEIVED);
-        s->pcb = pcb;
-        s->len = q->len;
-        memcpy(s->data, q->payload, q->len);
-        OSE_send((SIGNAL **) &s, PID_BACKPACK);*/
 	}
 	
     pbuf_free(p);
@@ -82,10 +76,6 @@ err_t rfcomm_disconnected(void *arg, struct rfcomm_pcb *pcb, err_t err)
 {
 	err_t ret = ERR_OK;
 
-    /*struct sig_bt_disconnected *s = (void *) OSE_alloc(sizeof(struct sig_bt_disconnected), SIG_BT_DISCONNECTED);
-    s->pcb = pcb;
-    OSE_send((SIGNAL **) &s, PID_BACKPACK);*/
-
     rfcommproc_t proc = arg;
     proc(pcb, RFCOMM_DISCONNECTED, NULL, 0);
 
@@ -109,10 +99,6 @@ err_t rfcomm_accept(void *arg, struct rfcomm_pcb *pcb, err_t err)
 
         rfcommproc_t proc = arg;
         proc(pcb, RFCOMM_ACCEPTED, NULL, 0);
-
-        /*struct sig_bt_accepted *s = (void *) OSE_alloc(sizeof(struct sig_bt_accepted), SIG_BT_ACCEPTED);
-        s->pcb = pcb;
-        OSE_send((SIGNAL **) &s, PID_BACKPACK);*/
 	}
 
 	return ERR_OK;
@@ -150,17 +136,19 @@ err_t bt_connect_ind(void *arg, struct l2cap_pcb *pcb, err_t err)
 	return ERR_OK;  
 }
 
-err_t bt_rfcomm_listen(u8_t cn, rfcommproc_t proc)
+struct rfcomm_pcb *bt_rfcomm_listen(u8_t cn, rfcommproc_t proc)
 {
-	struct rfcomm_pcb *rfcommpcb;
+	struct rfcomm_pcb *pcb;
 
-	LWIP_DEBUGF(RFCOMM_DEBUG, ("bt_spp_init: Allocate RFCOMM PCB for CN 1\n"));
-	if ((rfcommpcb = rfcomm_new(NULL)) == NULL) {
-		LWIP_DEBUGF(BT_SPP_DEBUG, ("lap_init: Could not alloc RFCOMM PCB for channel 1\n"));
-		return ERR_MEM;
+	LWIP_DEBUGF(RFCOMM_DEBUG, ("bt_spp_init: Allocate RFCOMM PCB\n"));
+	if ((pcb = rfcomm_new(NULL)) == NULL) {
+		LWIP_DEBUGF(BT_SPP_DEBUG, ("lap_init: Could not alloc RFCOMM PCB\n"));
+		return NULL;
 	}
-    rfcommpcb->callback_arg = proc;
-	rfcomm_listen(rfcommpcb, cn, rfcomm_accept);
+    pcb->callback_arg = proc;
+	rfcomm_listen(pcb, cn, rfcomm_accept);
+
+    return pcb;
 }
 
 err_t bt_spp_init(void)

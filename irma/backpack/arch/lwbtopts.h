@@ -62,7 +62,7 @@
 #define MEMP_NUM_L2CAP_SEG (2 + 2 * MAX_NUM_CLIENTS) /* One per number of L2CAP connections */
 
 #define MEMP_NUM_SDP_PCB MAX_NUM_CLIENTS /* One per number of connected Bluetooth clients */
-#define MEMP_NUM_SDP_RECORD 1 /* One per registered service record */
+#define MEMP_NUM_SDP_RECORD 3 /* One per registered service record */
 
 #define MEMP_NUM_RFCOMM_PCB (2 + 2 * MAX_NUM_CLIENTS) /* Two for DT + Two per number of connected Bluetooth clients */
 #define MEMP_NUM_RFCOMM_PCB_LISTEN (2 * MAX_NUM_CLIENTS) /* Two per number of connected Bluetooth clients */

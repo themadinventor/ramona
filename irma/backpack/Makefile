@@ -21,5 +21,6 @@ clean:
 backpack.elf: ${APP} ${HOST} ${UTILS} ${LWBT} ${LWIP} ${FULIBC}
 	${LD} -T ${LDNAME} -g -o $@ $^
 	${OBJCOPY} -O binary $@ ${@:.elf=.bin}
+	${OBJCOPY} --extract-symbol $@ li${@}
 	${NM} -n $@ > ${@:.elf=.sym}
 

@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "signals.h"
 #include "transport.h"
+#include "plugin.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -62,7 +63,8 @@ enum {
     MON_REBOOT,
     MON_READREG,
     MON_WRITEREG,
-    MON_CALL
+    MON_CALL,
+    MON_PLUGIN
 };
 
 struct monitor_packet {
@@ -87,6 +89,9 @@ struct monitor_packet {
             uint32_t addr;
             uint32_t regs[4];
         } callop;
+        struct {
+            uint32_t state;
+        } pluginop;
     };
 } __attribute__((__packed__));
 
@@ -238,6 +243,22 @@ int mon_call(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
     return 0;
 }
 
+int mon_plugin(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
+{
+    inpkt.len = 4;
+
+    if (inpkt.pluginop.state == 1) {
+        plugin_enable();
+    } else if (inpkt.pluginop.state == 2) {
+        plugin_disable();
+    }
+
+    inpkt.pluginop.state = plugin_enabled();
+    bt_rfcomm_write(pcb, &inpkt, 2+4);
+
+    return 0;
+}
+
 const struct {
     int (*proc)(struct rfcomm_pcb *pcb, void *ptr, size_t *len);
     uint8_t hsize;
@@ -253,7 +274,8 @@ const struct {
     {mon_reboot, 0},
     {mon_readreg, 4},
     {mon_writereg, 8},
-    {mon_call, 20}
+    {mon_call, 20},
+    {mon_plugin, 4}
 };
 
 void monitor_proc(struct rfcomm_pcb *pcb, int event, void *ptr, size_t len)
