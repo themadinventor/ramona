@@ -16,13 +16,19 @@ import mpsse
 class AVRSilencer:
 
     def __init__(self):
-        self.m = mpsse.MPSSE(mpsse.BITBANG)
+        try:
+            self.m = mpsse.MPSSE(mpsse.BITBANG)
+        except:
+            print 'AVRSilencer: not initialized'
+            self.m = None
 
     def reset(self):
-        self.m.PinLow(3)
+        if self.m is not None:
+            self.m.PinLow(3)
 
     def release(self):
-        self.m.PinHigh(3)
+        if self.m is not None:
+            self.m.PinHigh(3)
 
 class IRMAFlasher:
 
