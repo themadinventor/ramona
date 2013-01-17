@@ -18,4 +18,5 @@ ${TARGET}.elf: ${OBJS}
 	${LD} -T ${LDNAME} -g -R libackpack.elf -o $@  $^ 
 	${OBJCOPY} -O binary $@ ${@:.elf=.bin}
 	${NM} -n $@ > ${@:.elf=.sym}
+	./bless.py ${@:.elf=.bin}
 
