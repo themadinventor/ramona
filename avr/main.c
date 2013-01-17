@@ -20,7 +20,8 @@ ISR(TIMER0_COMPA_vect)
 
 void cmd_write(uint8_t reg, uint8_t data)
 {
-    if (reg == 0x01) {
+    switch (reg) {
+    case 0x01:
         if (data == 0x01) {
             PORTD |= _BV(5);
             led_state = 1;
@@ -30,16 +31,52 @@ void cmd_write(uint8_t reg, uint8_t data)
         } else if (data == 0x03) {
             led_state = 2;
         }
+        break;
+
+    case 0x02:
+        DDRB = data;
+        break;
+
+    case 0x03:
+        DDRC = data;
+        break;
+
+    case 0x04:
+        DDRD = data | _BV(5);   // Keep LED as output
+        break;
+
+    case 0x05:
+        PORTB = data;
+        break;
+
+    case 0x06:
+        PORTC = data | _BV(4) | _BV(5); // Keep I2C pull-up
+        break;
+
+    case 0x07:
+        PORTD = (data & ~_BV(5)) | (PORTD & _BV(5));
+        break;
     }
 }
 
 uint8_t cmd_read(uint8_t reg)
 {
-    if (reg == 0x01) {
+    switch (reg) {
+    case 0x01:
         return led_state;
-    }
 
-    return 0xaa;
+    case 0x05:
+        return PINB;
+
+    case 0x06:
+        return PINC;
+
+    case 0x07:
+        return PIND;
+
+    default:
+        return 0xaa;
+    }
 }
 
 ISR(TWI_vect)
@@ -103,6 +140,7 @@ int main(void)
     /* I2C Bus to IRMA */
     PORTC = _BV(4)|_BV(5); // Pull-up on SDA and SCL
 
+    /* I2C to IRMA */
     TWAR = (1 << 1);
     TWDR = 0xFF;
     TWCR = _BV(TWEN)|_BV(TWIE)|_BV(TWINT)|_BV(TWEA);
@@ -120,8 +158,8 @@ int main(void)
     sei();
 
     while (1) {
-        if (uart_rxlen() > 0) {
-            char c = uart_receive();
+        //if (uart_rxlen() > 0) {
+            //char c = uart_receive();
         
             /*if (c == 0x01) {
                 PORTD |= _BV(5);
@@ -132,7 +170,7 @@ int main(void)
             } else if (c == 0x03) {
                 led_state = 2;
             }*/
-        }
+        //}
     };
 }
 

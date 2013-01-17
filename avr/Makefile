@@ -15,7 +15,12 @@ flash: $(TARGET).hex
 
 fuse:
 	#avrdude -c avrftdi -p$(MCU) -U lfuse:w:0x62:m -U hfuse:w:0xdd:m -U efuse:w:0x01:m
-	avrdude -c avrftdi -p$(MCU) -U lfuse:w:0xcf:m -U hfuse:w:0xdd:m -U efuse:w:0x01:m
+
+	# med 13 MHz-kristall
+	#avrdude -c avrftdi -p$(MCU) -U lfuse:w:0xcf:m -U hfuse:w:0xdd:m -U efuse:w:0x01:m
+
+	# med intern oscillator
+	avrdude -c avrftdi -p$(MCU) -U lfuse:w:0xe2:m -U hfuse:w:0xdd:m -U efuse:w:0x01:m
 
 size: $(OBJS)
 	$(SIZE) $(OBJS)
