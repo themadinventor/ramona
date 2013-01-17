@@ -80,6 +80,8 @@ void uart2_rx_int(int bytes)
  */
 void bpMain(void)
 {
+    printf("bpMain\n");
+
     lwbt_init();
     monitor_init();
 

@@ -8,6 +8,8 @@ static struct plugin *plugin = (struct plugin *) PLUGIN_BASE;
 static enum {PLUGIN_DISABLED, PLUGIN_ENABLED, PLUGIN_FAILED, PLUGIN_INVALID} plugin_state;
 static void (*plugin_teardown_proc)(void);
 
+extern void _ebss;
+
 int plugin_present(void)
 {
     return (plugin->magic != 0xffffffff) && (plugin->magic != 0);
@@ -43,6 +45,23 @@ void *plugin_entry(void)
 void plugin_enable(void)
 {
     if (plugin_state != PLUGIN_DISABLED || !plugin_valid()) {
+        return;
+    }
+
+    if (plugin->text != PLUGIN_BASE) {
+        printf("Plugin text is not at linked address\n");
+        return;
+    }
+    if (plugin->data < (uint32_t) &_ebss) {
+        printf("Plugin data is below OS ebss\n");
+        return;
+    }
+    if (plugin->ebss > 0x12000) {
+        printf("Plugin ebss is beyond end of ram\n");
+        return;
+    }
+    if (plugin->etext < plugin->text || plugin->bss < plugin->data || plugin->ebss < plugin->bss) {
+        printf("Plugin has funky memory map\n");
         return;
     }
 

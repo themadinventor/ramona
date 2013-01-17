@@ -34,8 +34,10 @@ extern void NVDS_WriteFile(unsigned char tag, size_t len, void *ptr);
 extern void NVDS_DeleteFile(unsigned char tag);
 
 extern PROCESS proc_hci, proc_flash_eraser, proc_flash_handler;
-extern char build_time[];
-extern char build_comment[];
+extern char os_build_time[];
+extern char os_build_comment[];
+extern char bp_build_time[];
+extern char bp_build_comment[];
 
 extern struct {
     void (*write)(void *addr, unsigned char data);  /* +00: write proc */

@@ -187,7 +187,8 @@ UART1ReadByte:
 .global UART1GetTxFIFOSize
 .thumb_func
 UART1GetTxFIFOSize:
-    ldr     r1, =0x00800b1c
+    //ldr     r1, =0x00800b1c
+    ldr     r1, =0x00800b0c
     ldrb    r0, [r1]
     mov     pc, lr
 

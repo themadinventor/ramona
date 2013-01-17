@@ -68,7 +68,7 @@ enum {
 };
 
 struct monitor_packet {
-    uint8_t type, len;
+    uint16_t type, len;
     union {
         uint8_t raw[0];
         struct {
@@ -95,6 +95,7 @@ struct monitor_packet {
     };
 } __attribute__((__packed__));
 
+#define MON_PACK_SIZE 4
 
 static struct monitor_packet inpkt;
 uint8_t instate;
@@ -109,19 +110,26 @@ int mon_disconnect(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
 
 int mon_readmem(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
 {
-    uint8_t outbuf[266];
+    /*uint8_t outbuf[266];
     struct monitor_packet *outpkt = outbuf;
-    memcpy(outpkt, &inpkt, 10);
+    memcpy(outpkt, &inpkt, 10);*/
 
     /*int idx;
     uint8_t *p = (uint8_t *)inpkt.memop.addr;
     for (idx=0; idx<inpkt.memop.len; idx++) {
         outpkt->memop.data[idx] = *p++;
     }*/
-    memcpy(outpkt->memop.data, (uint8_t *)inpkt.memop.addr, inpkt.memop.len);
+    //memcpy(outpkt->memop.data, (uint8_t *)inpkt.memop.addr, inpkt.memop.len);
 
-    outpkt->len = 8 + inpkt.memop.len;
-    bt_rfcomm_write(pcb, outpkt, 2 + outpkt->len);
+    //outpkt->len = 8 + inpkt.memop.len;
+    //bt_rfcomm_write(pcb, outpkt, MON_PACK_SIZE + outpkt->len);
+    
+    inpkt.len = 8 + inpkt.memop.len;
+    //inpkt.memop.addr = 0;
+    //inpkt.memop.len = 0;
+    bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE + 8);
+
+    bt_rfcomm_write(pcb, (void *) inpkt.memop.addr, inpkt.memop.len);
 
     return 0;
 }
@@ -143,7 +151,7 @@ int mon_writemem(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
         inpkt.len = 8;
         inpkt.memop.addr = 0;
         inpkt.memop.len = 0;
-        bt_rfcomm_write(pcb, &inpkt, 2 + 8);
+        bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE + 8);
         return 0;
     } else {
         return 1;
@@ -157,6 +165,8 @@ int mon_writeflash(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
         to_write = inpkt.len - 8;
     }
 
+    //printf("writeflash: to_write=%d, len = %d\n", to_write, inpkt.len);
+
     Flash_Write(inpkt.flashop.addr, ptr, to_write);
     inpkt.flashop.addr += to_write;
 
@@ -167,7 +177,7 @@ int mon_writeflash(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
         inpkt.len = 8;
         inpkt.memop.addr = 0;
         inpkt.memop.len = 0;
-        bt_rfcomm_write(pcb, &inpkt, 2 + 8);
+        bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE + 8);
         return 0;
     } else {
         return 1;
@@ -189,14 +199,14 @@ int mon_eraseflash(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
     inpkt.len = 8;
     inpkt.memop.addr = 0;
     inpkt.memop.len = 0;
-    bt_rfcomm_write(pcb, &inpkt, 2 + 8);
+    bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE + 8);
     return 0;
 }
 
 int mon_reboot(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
 {
     inpkt.len = 0;
-    bt_rfcomm_write(pcb, &inpkt, 2);
+    bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE);
     bt_rfcomm_disconnect(pcb);
 
 #if 1
@@ -215,7 +225,7 @@ int mon_readreg(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
 {
     inpkt.len = 8;
     inpkt.regop.data = *((uint32_t *)inpkt.regop.addr);
-    bt_rfcomm_write(pcb, &inpkt, 2 + 8);
+    bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE + 8);
 
     return 0;
 }
@@ -224,7 +234,7 @@ int mon_writereg(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
 {
     *((uint32_t *)inpkt.regop.addr) = inpkt.regop.data;
     inpkt.len = 0;
-    bt_rfcomm_write(pcb, &inpkt, 2);
+    bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE);
 
     return 0;
 }
@@ -238,7 +248,7 @@ int mon_call(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
     proc = (void *) inpkt.callop.addr;
     inpkt.callop.regs[0] = proc(inpkt.callop.regs[0], inpkt.callop.regs[1], inpkt.callop.regs[2], inpkt.callop.regs[3]);
 
-    bt_rfcomm_write(pcb, &inpkt, 2+8);
+    bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE+8);
 
     return 0;
 }
@@ -247,6 +257,8 @@ int mon_plugin(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
 {
     inpkt.len = 4;
 
+    //printf("mon_plugin: %08x\n", inpkt.pluginop.state);
+
     if (inpkt.pluginop.state == 1) {
         plugin_enable();
     } else if (inpkt.pluginop.state == 2) {
@@ -254,7 +266,7 @@ int mon_plugin(struct rfcomm_pcb *pcb, void *ptr, size_t *len)
     }
 
     inpkt.pluginop.state = plugin_enabled();
-    bt_rfcomm_write(pcb, &inpkt, 2+4);
+    bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE+4);
 
     return 0;
 }
@@ -281,32 +293,47 @@ const struct {
 void monitor_proc(struct rfcomm_pcb *pcb, int event, void *ptr, size_t len)
 {
     if (event == RFCOMM_ACCEPTED) {
-        uint8_t outbuf[66];
+        /*uint8_t outbuf[66];
         struct monitor_packet *outpkt = outbuf;
 
         outpkt->type = MON_CONNECTED;
-        sprintf(outpkt->raw, "Ramona Monitor. IRMA Build: %s, %s", build_time, build_comment);
+        sprintf(outpkt->raw, "Ramona Monitor. IRMA Build: %s, %s", bp_build_time, bp_build_comment);
         outpkt->len = strlen(outpkt->raw);
-        bt_rfcomm_write(pcb, outpkt, 2 + outpkt->len);
+        bt_rfcomm_write(pcb, outpkt, MON_PACK_SIZE + outpkt->len);*/
+
+        inpkt.type = MON_CONNECTED;
+        inpkt.len = strlen(bp_build_time) + 1 + strlen(bp_build_comment) + 1;
+        bt_rfcomm_write(pcb, &inpkt, MON_PACK_SIZE);
+        bt_rfcomm_write(pcb, bp_build_time, strlen(bp_build_time) + 1);
+        bt_rfcomm_write(pcb, bp_build_comment, strlen(bp_build_comment) + 1);
+
         instate = 0;
 
     } else if (event == RFCOMM_RECEIVED) {
         uint8_t *p = ptr;
-        static uint8_t hidx;
+        static uint16_t hidx;
 
         while (len > 0) {
+            //printf("monitor_proc: instate=%d, len=%d\n", instate, len);
             if (instate == 0) {
                 inpkt.type = *p++; len--;
                 instate++;
             } else if (instate == 1) {
+                //inpkt.type |= (*p++) << 8; len--;
+                p++; len--;
+                instate++;
+            } else if (instate == 2) {
                 inpkt.len = *p++; len--;
+                instate++;
+            } else if (instate == 3) {
+                inpkt.len |= (*p++) << 8; len--;
                 hidx = 0;
                 if (monprocs[inpkt.type].hsize) {
                     instate++;
                 } else {
-                    instate = 3;
+                    instate = 5;
                 }
-            } else if (instate == 2) {
+            } else if (instate == 4) {
                 inpkt.raw[hidx++] = *p++; len--;
                 if (hidx == monprocs[inpkt.type].hsize) {
                     instate++;
@@ -314,13 +341,14 @@ void monitor_proc(struct rfcomm_pcb *pcb, int event, void *ptr, size_t len)
                     continue;
                 }
             }
-            if (instate == 3) {
+            if (instate == 5) {
                 if (monprocs[inpkt.type].proc == NULL) {
                     instate = 0;
                     bt_rfcomm_disconnect(pcb);
                     return;
                 }
 
+                //printf("monitor_proc: invoking, type=%02x, len=%d\n", inpkt.type, len);
                 ptr = p;
                 if (!monprocs[inpkt.type].proc(pcb, ptr, &len)) {
                     instate = 0;

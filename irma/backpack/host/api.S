@@ -87,11 +87,17 @@ __aeabi_idiv:
 .global proc_flash_handler
 .set proc_flash_handler, 0x0000c46c
 
-.global build_time
-.set build_time, 0x01010030
+.global os_build_time
+.set os_build_time, 0x01010030
 
-.global build_comment
-.set build_comment, 0x01010050
+.global os_build_comment
+.set os_build_comment, 0x01010050
+
+.global bp_build_time
+.set bp_build_time, 0x01000030
+
+.global bp_build_comment
+.set bp_build_comment, 0x01000050
 
 .global NVDS_Context
 .set NVDS_Context, 0x000006A4

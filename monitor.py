@@ -28,15 +28,16 @@ class MonitorPacket:
         (self.cmd, self.payload) = (cmd, payload)
 
     def __str__(self):
-        return '<Packet type=%02x payload=%s>' % (self.cmd, ' '.join(map(hex, map(ord, self.payload))))
+        return '<Packet type=%04x payload=%s>' % (self.cmd, ' '.join(map(hex, map(ord, self.payload))))
 
     def to_socket(self, sock):
-        sock.send(struct.pack('<BB', self.cmd, len(self.payload)) + self.payload)
+        sock.send(struct.pack('<HH', self.cmd, len(self.payload)) + self.payload)
 
     def from_socket(self, sock):
-        (self.cmd, length) = struct.unpack('<BB', sock.recv(2))
+        (self.cmd, length) = struct.unpack('<HH', sock.recv(4))
         if length > 0:
-            self.payload = sock.recv(length)
+            while len(self.payload) < length:
+                self.payload += sock.recv(length)
         else:
             self.payload = ''
 
@@ -51,8 +52,8 @@ class Monitor(object):
         pkt = MonitorPacket()
         pkt.from_socket(self.s)
         if pkt.cmd != pkt.MON_CONNECTED:
-            raise exception('Unexpected packet %s' % pkt)
-        self.firmware = pkt.payload
+            raise Exception('Unexpected packet %s' % pkt)
+        self.firmware = pkt.payload.split("\0")
 
     def reconnect(self):
         self.s = BluetoothSocket()
@@ -62,7 +63,7 @@ class Monitor(object):
         pkt = MonitorPacket()
         pkt.from_socket(self.s)
         if pkt.cmd != pkt.MON_CONNECTED:
-            raise exception('Unexpected packet %s' % pkt)
+            raise Exception('Unexpected packet %s' % pkt)
         self.firmware = pkt.payload
 
     def read_mem(self, addr, length):
@@ -392,7 +393,7 @@ class InteractiveMonitor(Monitor):
             img = f.read()
             f.close()
             (magic, flags, text, etext, data, bss, ebss, chksum) = struct.unpack('<IIIIIIII', img[0:32])
-            if magic != 0x414d5249:
+            if not magic in (0x414d5249, 0x44465755):
                 raise Exception()
         except:
             print 'Unable to read file'
@@ -407,24 +408,28 @@ class InteractiveMonitor(Monitor):
         print '  Erasing flash...'
         addr = 0x01060000
         while addr < 0x01060000+imgsize:
-            print '  %08x' % addr
+            print '    %08x' % addr
             self.erase_flash(addr, 1)
             addr += 0x10000
 
         print '  Writing to flash...'
         addr = 0x01060000
+        blocksz = 384
         while len(img) > 0:
-            d = img[0:16]
-            print '  %08x' % addr
+            d = img[0:blocksz]
+            print '    %08x' % addr
             self.write_flash(addr, d)
             addr = addr + len(d)
-            img = img[16:]
+            img = img[blocksz:]
 
-        print '  Starting plugin...',
-        if Monitor.plugin(self, 1) > 0:
-            print 'okay!'
+        if magic == 0x44465755:
+            print '  This plugin is a firmware update. Reboot to install.'
         else:
-            print 'failed.'
+            print '  Starting plugin...',
+            if Monitor.plugin(self, 1) > 0:
+                print 'okay!'
+            else:
+                print 'failed.'
 
     @MonitorCommand
     def dump(self, args):

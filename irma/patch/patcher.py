@@ -115,3 +115,13 @@ class Patcher:
         offset = offset & 0x3fffff
         self.setw(addr, 0xf000|(offset >> 11))
         self.setw(addr+2, 0xf800|(offset & 0x7ff))
+
+    def arm_mov_pc(self, addr, dest):
+        if (addr % 2 > 0) or (dest % 2 > 0):
+            raise ValueException('Not aligned')
+
+        offset = (dest - addr - 8)
+        if abs(offset) > pow(2, 11):
+            raise ValueExcpetion('ARM MOV PC: Out of bounds')
+        offset = offset & 0xfff
+        self.setl(addr, 0xe59ff000|offset)
