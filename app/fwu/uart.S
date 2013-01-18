@@ -163,7 +163,6 @@ UART2WriteString:
 3:
     pop     {r4,r5,r6,pc}
 
-/*
 .global UART1SetBaudRate
 .thumb_func
 UART1SetBaudRate:
@@ -188,7 +187,8 @@ UART1ReadByte:
 .global UART1GetTxFIFOSize
 .thumb_func
 UART1GetTxFIFOSize:
-    ldr     r1, =0x00800b1c
+    //ldr     r1, =0x00800b1c
+    ldr     r1, =0x00800b0c
     ldrb    r0, [r1]
     mov     pc, lr
 
@@ -296,15 +296,15 @@ UART3GetChar:
 UART3PutChar:
     push    {r4,r5,lr}
     mov     r4, r0
-    / *ldr     r1, =0x00800208* /
+    /*ldr     r1, =0x00800208*/
     ldr     r1, =0x00800214
     ldr     r5, =0x20
 1:
     ldrb    r0, [r1]
     and     r0, r5, r0
     beq     1b
-    / *lsr     r0, r0, #2
-    bcc     1b* /
+    /*lsr     r0, r0, #2
+    bcc     1b*/
     mov     r0, r4
     bl      UART3WriteByte
     pop     {r4,r5,pc}
@@ -326,4 +326,3 @@ UART3WriteString:
     b       1b
 3:
     pop     {r4,r5,pc}
-    */

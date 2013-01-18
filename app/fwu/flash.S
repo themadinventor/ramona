@@ -66,12 +66,12 @@ flash_erase:
 flash_write:
     /* Issue Program */
     mov     r2, #0x40
-    strh    r2, [r0]
+    strb    r2, [r0]
     strh    r1, [r0]
 
     /* Wait */
-    mov     r2, #0x80
 1:  ldrh    r1, [r0]
+    mov     r2, #0x80
     and     r1, r2
     beq     1b
 
