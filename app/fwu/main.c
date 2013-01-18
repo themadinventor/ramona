@@ -1,3 +1,10 @@
+/*
+ * Ericsson Bluetooth Baseband Controller
+ * OTA FWU Main
+ *
+ * (c) 2013 <fredrik@z80.se>
+ */
+
 #include "flash.h"
 #include "uart.h"
 #include "utils.h"
@@ -24,16 +31,19 @@ struct fwheader {
 
 void start(void)
 {
+    // Turn off LED
     *((unsigned char *) 0x00800110) |= 0x02;
 
+    // Initialize UART and write stuff (not really working, is buffering)
     UARTInit();
     UART2SetBaudRate(UART_115200);
     UART2WriteString("IRMA FWU\n\r");
 
+    // Calculate a pointer to the payload
     void *payload_base = &_etext + (&_edata - &_data);
-
     struct fwheader *header = payload_base;
 
+    // Sanuty checks
     if (header->magic != OS_MAGIC) {
         UART2WriteString("Fatal: Wrong magic\n\r");
         goto boot;
@@ -44,20 +54,19 @@ void start(void)
         goto boot;
     }
 
-    //UART2WriteString("Calculating checksum...\n\r");
+    // Verify checksum
     unsigned short checksum = ROM_CRC16(payload_base+8, header->size-8, 0);
     if (checksum != header->checksum) {
         UART2WriteString("Fatal: Invalid checksum\n\r");
         goto boot;
     }
 
-    //UART2WriteString("Flash stuff...\n\r");
-
     /* Apply voodoo to unlock flash */
     *((unsigned char *) 0x00800308) = 0x1e;
     *((unsigned char *) 0x0080030c) = 0x1e;
     *((unsigned char *) 0x00800310) = 0x16;
 
+    // Check that we support this flash
     unsigned int flash = flash_identify();
     if (flash != FLASH_ID) {
         UART2WriteString("Fatal: Unknown flash (");
@@ -66,32 +75,24 @@ void start(void)
         goto boot;
     }
 
-    //UART2WriteString("Erasing flash...\n\r");
-    //for (unsigned int addr = FLASH_FIRST_BASE; addr < FLASH_LIMIT; addr += FLASH_PAGE_SIZE) {
+    // Erase OS
     for (unsigned int addr = FLASH_BASE; addr < FLASH_LIMIT; addr += FLASH_PAGE_SIZE) {
-        //WriteHex(addr);
-        
         if (flash_erase(addr)) {
             UART2WriteString("Fatal: Failed to erase page\n\r");
             goto reboot;
-        //} else {
-            //UART2WriteString(" ok\n\r");
         }
 
+        // Toggle LED to indicate activity
         *((unsigned char *) 0x00800110) ^= 0x02;
     }
-    //UART2WriteString("Flash empty\n\r");
-    //goto leave;
 
-    //UART2WriteString("Writing to flash...");
-    //for (unsigned int addr = FLASH_FIRST_BASE; addr < FLASH_FIRST_BASE + imgsize; addr += 2) {
+    // Write new OS
     unsigned short *src = payload_base;
     for (unsigned int addr = FLASH_BASE; addr < FLASH_BASE + header->size; addr += 2) {
         flash_write(addr, *src++); 
 
+        // Toggle LED each 4 kB to indicate activity
         if (!(addr & 0x00000fff)) {
-            //WriteHex(addr);
-            //UART2WriteString("\n\r");
             *((unsigned char *) 0x00800110) ^= 0x02;
         }
     }
@@ -100,23 +101,23 @@ void start(void)
     flash_write(FLASH_LIMIT, 0); 
 
 reboot:
-    //UART2WriteString("\n\rWill reboot.\n\r");
-
+    // Turn off LED
     *((unsigned char *) 0x00800110) |= 0x02;
 
+    // Trigger watchdog
     *((unsigned int *) 0x00800c0c) = 0xc0;
     *((unsigned int *) 0x00800c0c) = 0x1f;
 
+    // Required for watchdog to work. Wtf.
     *((unsigned char *) 0x00800910) = 0x00;
     *((unsigned char *) 0x00800914) = 0x04;
     *((unsigned char *) 0x00800910) = 0x01;
 
+    // Await death.
     for (;;) ;
 
 boot:
-    /* Flush UART */
-    //while (UART2GetTxFIFOSize() < 127) ;
-    //for (int i=0; i<0xfffff; i++) ;
+    // Optionally flush the UART here if we get it to work
     return;
 }
 

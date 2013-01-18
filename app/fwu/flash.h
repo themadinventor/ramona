@@ -1,3 +1,10 @@
+/*
+ * Ericsson Bluetooth Baseband Controller
+ * Flash interface
+ *
+ * (c) 2013 <fredrik@z80.se>
+ */
+
 #ifndef FLASH_H
 #define FLASH_H
 

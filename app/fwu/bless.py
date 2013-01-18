@@ -1,4 +1,9 @@
 #!/usr/bin/python
+#
+# Ramona
+# Over-the-air Firmware Update Blesser
+#
+# (c) 2013 <fredrik@z80.se>
 
 import sys
 import struct
@@ -33,6 +38,8 @@ f = file(sys.argv[1], 'r+b')
 img = f.read()
 (magic, flags, text, etext, data, bss, ebss, chksum) = struct.unpack('<IIIIIIII', img[0:32])
 
+# Special magic for FWU.
+# Required to run at boot
 if magic != 0x44465755:
     print 'Invalid magic! (%08x)' % magic
     sys.exit(1)
