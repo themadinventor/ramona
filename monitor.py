@@ -1,4 +1,9 @@
 #!/usr/bin/python
+#
+# Ramona
+# Wireless Monitor UI
+#
+# (c) 2013 <fredrik@z80.se>
 
 import sys
 import time
@@ -6,7 +11,7 @@ import select
 import tty
 import termios
 import struct
-from bluetooth.bluez import BluetoothSocket
+from bluetooth.bluez import BluetoothSocket, find_service
 from bluetooth.btcommon import BluetoothError
 
 class MonitorPacket:
@@ -42,6 +47,11 @@ class MonitorPacket:
             self.payload = ''
 
 class Monitor(object):
+
+    RAMONA_UUID = "ea5cf8a3-833d-4d61-bfec-9cf6f4230ac4"
+
+    def find_devices(self):
+        return find_service(uuid = self.RAMONA_UUID)
 
     def connect(self, addr, port = 1):
         (self.addr, self.port) = (addr, port)
@@ -414,7 +424,7 @@ class InteractiveMonitor(Monitor):
 
         print '  Writing to flash...'
         addr = 0x01060000
-        blocksz = 384
+        blocksz = 256
         while len(img) > 0:
             d = img[0:blocksz]
             print '    %08x' % addr
@@ -426,6 +436,7 @@ class InteractiveMonitor(Monitor):
             print '  This plugin is a firmware update. Reboot to install.'
         else:
             print '  Starting plugin...',
+            sys.stdout.flush()
             if Monitor.plugin(self, 1) > 0:
                 print 'okay!'
             else:
@@ -534,6 +545,18 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         addr = sys.argv[1]
     else:
-        addr = '00:80:37:14:42:df'
+        print "No device specified, scanning..."
+        devices = Monitor().find_devices()
+        if len(devices) < 1:
+            print "No suitable devices found"
+            sys.exit(1)
+        elif len(devices) == 1:
+            print "Found %s" % devices[0]["host"]
+            addr = devices[0]["host"]
+        else:
+            print "Found %d devices:" % len(devices)
+            for device in devices:
+                print "  %s" % device["host"]
+            sys.exit(1)
     InteractiveMonitor().run(addr)
 
