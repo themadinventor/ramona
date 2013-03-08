@@ -42,6 +42,15 @@ __aeabi_idiv:
 .global I2C_Write
 .thumb_set I2C_Write, 0x010102ac
 
+.global NVDS_ReadFile
+.thumb_set NVDS_ReadFile, 0x010119f4
+
+.global NVDS_WriteFile
+.thumb_set NVDS_WriteFile, 0x010119a4
+
+.global NVDS_DeleteFile
+.thumb_set NVDS_DeleteFile, 0x01011a74
+
 .global RegisterTransport
 .thumb_set RegisterTransport, 0x0103b658
 

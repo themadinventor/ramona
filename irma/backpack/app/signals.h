@@ -3,17 +3,14 @@
 
 #define PID_BACKPACK        0x15
 
-#define SIG_TIMER           0xc000
+#define SIG_TIMER_1S        0xc000
 #define SIG_TRANSPORT_EVENT 0xc001
 #define SIG_TRANSPORT_DATA  0xc002
 #define SIG_UART_RX         0xc003
 #define SIG_FLASH_ERASE     0xc004
 #define SIG_FLASH_WRITE     0xc005
 #define SIG_FLASH_COMPLETE  0xc006
-/*#define SIG_BT_ACCEPTED     0xc007
-#define SIG_BT_DISCONNECTED 0xc008
-#define SIG_BT_RECEIVED     0xc009
-#define SIG_BT_SEND         0xc00a*/
+#define SIG_TIMER_LEDBLINK  0xc007
 
 struct sig_flash_erase {
     SIGSELECT sig_no;

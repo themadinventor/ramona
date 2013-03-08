@@ -80,29 +80,39 @@ void uart2_rx_int(int bytes)
  */
 void bpMain(void)
 {
-    printf("bpMain\n");
+    //printf("bpMain\n");
 
     lwbt_init();
     monitor_init();
 
-    plugin_enable();
+    char autostart;
+    if (NVDS_ReadFile(0x80, 1, &autostart) && autostart) {
+        plugin_enable();
+    }
 
     //I2C_Init();
 
-    timer_add(1000, SIG_TIMER);
+    timer_add(1000, SIG_TIMER_1S);
 
     static const SIGSELECT anysig[] = {0};
     for(;;) {
         SIGNAL *s = OSE_receive((SIGSELECT *) anysig);
 
         switch (s->sig_no) {
-        case SIG_TIMER:
+        case SIG_TIMER_1S:
             //UART2PutChar(0x03);
             
             //I2C_Write(2, 1, 3);
+            // Turn on LED
+            *((unsigned char *) 0x00800110) &= ~0x02;
 
             lwbt_timer();
-            timer_add(1000, SIG_TIMER);
+            timer_add(1000, SIG_TIMER_1S);
+            timer_add(100, SIG_TIMER_LEDBLINK);
+            break;
+
+        case SIG_TIMER_LEDBLINK:
+            *((unsigned char *) 0x00800110) |= 0x02;
             break;
 
         case SIG_TRANSPORT_EVENT:
