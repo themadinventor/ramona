@@ -36,28 +36,28 @@ void TryFirmwareUpgrade(void)
     *((unsigned char *) 0x00800c0c) = 0xc0;
     *((unsigned char *) 0x00800c0c) = 0x00;
 
-    UARTInit();
+    /*UARTInit();
     UART2SetBaudRate(UART_115200);
-    UART2WriteString("TryFirmwareUpgrade\n\r");
+    UART2WriteString("TryFirmwareUpgrade\n\r");*/
 
     if (plugin->magic != PLUGIN_MAGIC) {
-        UART2WriteString("Invalid magic\n\r");
+        //UART2WriteString("Invalid magic\n\r");
         return;
     }
 
     unsigned int plugin_size = plugin->etext - plugin->text + plugin->bss - plugin->data;
     if (plugin_size > PLUGIN_LIMIT) {
-        UART2WriteString("Plugin too large\n\r");
+        //UART2WriteString("Plugin too large\n\r");
         //for (;;) ;
         return;
     }
 
-    UART2WriteString("Calculating checksum...\n\r");
+    //UART2WriteString("Calculating checksum...\n\r");
     unsigned short crc = ROM_CRC16(plugin, PLUGIN_CRC_1, 0);
     crc = ROM_CRC16(plugin->entry, plugin_size-PLUGIN_CRC_2, crc);
 
     if (crc != plugin->checksum) {
-        UART2WriteString("Invalid checksum\n\r");
+        //UART2WriteString("Invalid checksum\n\r");
         //for (;;) ;
         return;
     }
