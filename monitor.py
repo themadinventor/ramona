@@ -393,6 +393,17 @@ class InteractiveMonitor(Monitor):
         else:
             print '  File not found'
 
+    def draw_progress(self, pos, max, width = 32):
+        sys.stdout.write('\r  [');
+        dots = width*pos/max
+        for i in xrange(width):
+            if i < dots:
+                sys.stdout.write('=')
+            else:
+                sys.stdout.write(' ')
+        sys.stdout.write('] %3d%%' % (100*pos/max))
+        sys.stdout.flush()
+
     @MonitorCommand
     def load(self, args):
         if len(args) < 1:
@@ -418,19 +429,26 @@ class InteractiveMonitor(Monitor):
         print '  Erasing flash...'
         addr = 0x01060000
         while addr < 0x01060000+imgsize:
-            print '    %08x' % addr
             self.erase_flash(addr, 1)
             addr += 0x10000
+            self.draw_progress(addr-0x01060000, imgsize)
+            print '    %08x' % addr,
+        sys.stdout.write('\n\n')
 
         print '  Writing to flash...'
         addr = 0x01060000
-        blocksz = 256
+        blocksz = 2048
+        written = 0
         while len(img) > 0:
             d = img[0:blocksz]
-            print '    %08x' % addr
             self.write_flash(addr, d)
             addr = addr + len(d)
+            written = written + len(d)
             img = img[blocksz:]
+
+            self.draw_progress(written, imgsize)
+            print '  %08x' % addr,
+        sys.stdout.write('\n\n')
 
         if magic == 0x44465755:
             print '  This plugin is a firmware update. Reboot to install.'
