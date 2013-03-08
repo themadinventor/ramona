@@ -55,6 +55,12 @@ static void transport_if_send_hci_event(int interface, void *packet, int length)
 {
     LWIP_DEBUGF(PHYBUSIF_DEBUG, ("HCI Event: interface=%d, packet=%08x, length=%d\n", interface, packet, length));
 
+    if (length > 255) {
+        //OSE_UserError(0xef);
+        printf("HCI Event: Packet bigger than 255 bytes, dropping! (len=%d)\n", length);
+        return;
+    }
+
     SIGNAL *s = OSE_alloc(2+255, SIG_TRANSPORT_EVENT);
     if (!s) {
         LWIP_DEBUGF(PHYBUSIF_DEBUG, ("HCI Event: Unable to allocate signal, dropping.\n"));
@@ -73,7 +79,13 @@ static void transport_if_send_hci_data(int interface, void *packet, int length)
 
     LWIP_DEBUGF(PHYBUSIF_DEBUG, ("HCI Data: interface=%d, packet=%08x, length=%d, lr=%08x\n", interface, packet, length, lr));
 
-    SIGNAL *s = OSE_alloc(2+255, SIG_TRANSPORT_DATA);
+    if (length > 804) {
+        //OSE_UserError(0xee);
+        printf("HCI Data: Packet bigger than 804 bytes, dropping! (len=%d)\n", length);
+        return;
+    }
+
+    SIGNAL *s = OSE_alloc(806, SIG_TRANSPORT_DATA);
     if (!s) {
         LWIP_DEBUGF(PHYBUSIF_DEBUG, ("HCI Data: Unable to allocate signal, dropping.\n"));
         return;
@@ -172,6 +184,10 @@ void phybusif_output(struct pbuf *p, u16_t len)
 			    //LWIP_DEBUGF(PHYBUSIF_DEBUG, ("%02x ", c));
 
                 s->raw[2+idx++] = c;
+    
+                /*if (idx > 255) {
+                    OSE_UserError(0xdd);
+                }*/
             } else {
                 type = c;
                 //LWIP_DEBUGF(PHYBUSIF_DEBUG, ("[%02x] ", type));
