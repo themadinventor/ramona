@@ -12,6 +12,8 @@
 #include "lwip/sys.h"
 #include "lwip/stats.h"
 
+#include "utils/uart.h"
+
 #include "btstack.h"
 
 static const u8_t spp_service_record[] =
@@ -78,11 +80,13 @@ void teardown(void)
 
 int start(int p)
 {
+    //UART2SetBaudRate(UART_460800);
     printf("spp: start\n");
 
     plugin_teardown(teardown);
 
     if ((listener = bt_rfcomm_listen(2, spp_proc)) == NULL) {
+        printf("spp: failed to allocate rfcomm socket\n");
         return -1;
     }
 
