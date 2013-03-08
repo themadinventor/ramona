@@ -4,6 +4,7 @@
 #include <util/twi.h>
 
 #include "uart.h"
+#include "proto.h"
 
 volatile uint8_t led_state = 0;
 
@@ -21,40 +22,44 @@ ISR(TIMER0_COMPA_vect)
 void cmd_write(uint8_t reg, uint8_t data)
 {
     switch (reg) {
-    case 0x01:
-        if (data == 0x01) {
-            PORTD |= _BV(5);
-            led_state = 1;
-        } else if (data == 0x02) {
-            PORTD &= ~_BV(5);
-            led_state = 0;
-        } else if (data == 0x03) {
-            led_state = 2;
-        }
-        break;
-
-    case 0x02:
-        DDRB = data;
-        break;
-
-    case 0x03:
-        DDRC = data;
-        break;
-
-    case 0x04:
-        DDRD = data | _BV(5);   // Keep LED as output
-        break;
-
-    case 0x05:
+    case PROTO_CMD(GPIO_SET_PORT, GPIO_PORTB):
         PORTB = data;
         break;
 
-    case 0x06:
-        PORTC = data | _BV(4) | _BV(5); // Keep I2C pull-up
+    case PROTO_CMD(GPIO_SET_PORT, GPIO_PORTC):
+        PORTC = data | _BV(4) | _BV(5); // preserve IRMA I2C pull-up
         break;
 
-    case 0x07:
-        PORTD = (data & ~_BV(5)) | (PORTD & _BV(5));
+    case PROTO_CMD(GPIO_SET_PORT, GPIO_PORTD):
+        PORTD = data;
+        break;
+
+    case PROTO_CMD(GPIO_SET_DDR, GPIO_PORTB):
+        DDRB = data;
+        break;
+
+    case PROTO_CMD(GPIO_SET_DDR, GPIO_PORTC):
+        DDRC = data;
+        break;
+
+    case PROTO_CMD(GPIO_SET_DDR, GPIO_PORTD):
+        DDRD = data;
+        break;
+
+    case PROTO_CMD(GPIO_STROBE_PORT, GPIO_PORTB):
+        PORTB ^= data;
+        PORTB ^= data;
+        break;
+
+    case PROTO_CMD(GPIO_STROBE_PORT, GPIO_PORTC):
+        data &= ~(_BV(4)|_BV(5));
+        PORTC ^= data;
+        PORTC ^= data;
+        break;
+
+    case PROTO_CMD(GPIO_STROBE_PORT, GPIO_PORTD):
+        PORTD ^= data;
+        PORTD ^= data;
         break;
     }
 }
@@ -62,16 +67,13 @@ void cmd_write(uint8_t reg, uint8_t data)
 uint8_t cmd_read(uint8_t reg)
 {
     switch (reg) {
-    case 0x01:
-        return led_state;
-
-    case 0x05:
+    case PROTO_CMD(GPIO_READ_PIN, GPIO_PORTB):
         return PINB;
 
-    case 0x06:
+    case PROTO_CMD(GPIO_READ_PIN, GPIO_PORTC):
         return PINC;
 
-    case 0x07:
+    case PROTO_CMD(GPIO_READ_PIN, GPIO_PORTD):
         return PIND;
 
     default:

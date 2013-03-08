@@ -23,22 +23,20 @@ ISR(USART_UDRE_vect)
     UDR0 = FIFO_GET(uart_tx);
 }
 
-/*void uart_configure(int baud)
+static inline void uart_configure(long baud)
 {
-    uint16_t ubrr = F_CPU / 16 / baud - 1;
+    uint16_t ubrr = (F_CPU / 16) / baud - 1;
 
     UBRR0H = ubrr >> 8;
     UBRR0L = ubrr;
-}*/
+}
 
 void uart_init(void)
 {
     UCSR0B = _BV(RXEN0) | _BV(TXEN0) | _BV(RXCIE0);
     UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
     
-    //uart_configure(115200);
-    UBRR0H = 0;
-    UBRR0L = 6;
+    uart_configure(115200);
 }
 
 void uart_transmit(uint8_t c)
