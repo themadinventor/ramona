@@ -7,6 +7,7 @@
 
 #include "host/ose.h"
 #include "host/app.h"
+#include "host/irma.h"
 #include "uart.h"
 #include "utils.h"
 
@@ -52,9 +53,13 @@ void panic(void)
     UART2WriteString("\n\r\n\rSystem will reboot.\n\r");
 
     // Provoke watchdog to reset IRMA
-    *((unsigned int *)0x00800c10) = 0x00;
+    /**((unsigned int *)0x00800c10) = 0x00;
     *((unsigned int *)0x00800c0c) = 0xc0;
-    *((unsigned int *)0x00800c0c) = 0x18;
+    *((unsigned int *)0x00800c0c) = 0x18;*/
+
+    WDT_RESET = 0;
+    WDT_CONTROL = WDT_PASSWORD;
+    WDT_CONTROL = 0x18;
 
     for (;;) ;
 #else
@@ -80,8 +85,11 @@ void TrapHandler(unsigned int code, unsigned int lr)
     UART2WriteString("\n\r\n\rSystem will reboot.\n\r\n\r");
 
     // Provoke watchdog to reset IRMA
-    *((unsigned int *)0x00800c0c) = 0xc0;
-    *((unsigned int *)0x00800c0c) = 0x1f;
+    /**((unsigned int *)0x00800c0c) = 0xc0;
+    *((unsigned int *)0x00800c0c) = 0x1f;*/
+
+    WDT_CONTROL = WDT_PASSWORD;
+    WDT_CONTROL = 0x1f;
 
     for (;;) ;
 }

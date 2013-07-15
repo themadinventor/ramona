@@ -7,6 +7,7 @@
 
 #include "host/ose.h"
 #include "host/app.h"
+#include "host/irma.h"
 
 #include "uart.h"
 #include "utils.h"
@@ -92,19 +93,21 @@ void bpMain(void)
 
     //I2C_Init();
 
-    timer_add(1000, SIG_TIMER_1S);
+    //timer_add(1000, SIG_TIMER_1S);
 
     static const SIGSELECT anysig[] = {0};
     for(;;) {
         SIGNAL *s = OSE_receive((SIGSELECT *) anysig);
 
         switch (s->sig_no) {
+#if 0
         case SIG_TIMER_1S:
             //UART2PutChar(0x03);
             
             //I2C_Write(2, 1, 3);
             // Turn on LED
-            *((unsigned char *) 0x00800110) &= ~0x02;
+            //*((unsigned char *) 0x00800110) &= ~0x02;
+            UART2_MCR &= ~0x02;
 
             lwbt_timer();
             timer_add(1000, SIG_TIMER_1S);
@@ -112,8 +115,10 @@ void bpMain(void)
             break;
 
         case SIG_TIMER_LEDBLINK:
-            *((unsigned char *) 0x00800110) |= 0x02;
+            //*((unsigned char *) 0x00800110) |= 0x02;
+            UART2_MCR |= 0x02;
             break;
+#endif
 
         case SIG_TRANSPORT_EVENT:
         case SIG_TRANSPORT_DATA:

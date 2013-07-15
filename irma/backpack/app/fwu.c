@@ -6,8 +6,9 @@
  */
 
 #include "uart.h"
+#include "host/irma.h"
 
-extern unsigned short ROM_CRC16(void *ptr, unsigned int len, unsigned short crc);
+//extern unsigned short ROM_CRC16(void *ptr, unsigned int len, unsigned short crc);
 
 #define PLUGIN_BASE 0x01060000
 #define PLUGIN_LIMIT 0x90000
@@ -33,8 +34,10 @@ void TryFirmwareUpgrade(void)
     struct plugin *plugin = (struct plugin *) PLUGIN_BASE;
 
     // Disable watchdog?
-    *((unsigned char *) 0x00800c0c) = 0xc0;
-    *((unsigned char *) 0x00800c0c) = 0x00;
+    //*((unsigned char *) 0x00800c0c) = 0xc0;
+    //*((unsigned char *) 0x00800c0c) = 0x00;
+    WDT_CONTROL = WDT_PASSWORD;
+    WDT_CONTROL = 0;
 
     /*UARTInit();
     UART2SetBaudRate(UART_115200);
