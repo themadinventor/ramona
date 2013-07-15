@@ -105,17 +105,17 @@
 #define FIFO3_STATUS    FIFO_STATUS(FIFO3_BASE)
 
 /* Watchdog Timer */
-#define WDT_CONTROL     (*((uint8_t *) WDT_BASE + 0x0c))
-#define WDT_RESET       (*((uint8_t *) WDT_BASE + 0x10))
+#define WDT_CONTROL     (*((uint8_t *) (WDT_BASE + 0x0c)))
+#define WDT_RESET       (*((uint8_t *) (WDT_BASE + 0x10)))
 
 #define WDT_PASSWORD    (0xc0)
 
 /* IO */
-#define UART1_BAUD      (*((uint8_t *) IO_BASE + 0x00))
-#define UART_GPIO       (*((uint8_t *) IO_BASE + 0x04))
-#define UART_MUX        (*((uint8_t *) IO_BASE + 0x08))
-#define UART2_BAUD      (*((uint8_t *) IO_BASE + 0x0C))
-#define UART3_BAUD      (*((uint8_t *) IO_BASE + 0x14))
+#define UART1_BAUD      (*((uint8_t *) (IO_BASE + 0x00)))
+#define UART_GPIO       (*((uint16_t *) (IO_BASE + 0x04)))
+#define UART_MUX        (*((uint16_t *) (IO_BASE + 0x08)))
+#define UART2_BAUD      (*((uint8_t *) (IO_BASE + 0x0C)))
+#define UART3_BAUD      (*((uint8_t *) (IO_BASE + 0x14)))
 
 #define UART_BAUD_300       (0x19)
 #define UART_BAUD_600       (0x18)
