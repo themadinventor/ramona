@@ -86,8 +86,7 @@ void enter_bsl(void)
     UART2_MCR &= ~0x02;
 
     // Drive UART3 TxD
-    UART_GPIO &= ~UART3_TXD_MASK;
-    UART_GPIO |= UART3_TXD_TXD;
+    UART_GPIO = (UART_GPIO & ~UART3_TXD_MASK) | UART3_TXD_TXD;
 
     while (UART3GetRxFIFOSize() > 0) {
         UART3ReadByte();
@@ -204,9 +203,11 @@ inline static void nb_process_byte(struct rfcomm_pcb *pcb, uint8_t c)
                 break;
 
             case 'W': // write to msp
+                handler = msp_write;
                 break;
 
             case 'R': // read from msp
+                handler = msp_read;
                 break;
 
             case 'f': // flash default firmware
@@ -265,11 +266,16 @@ int start(int p)
     //UART2SetBaudRate(UART_460800);
     //printf("nb13: start\n");
     
+#if 0
     // Set UART3 TxD to float
     UART_GPIO |= UART3_TXD_FLOAT;
 
     // Set UART2 OUT1 (MSP430 Reset) high
     UART2_MCR &= ~0x02;
+#endif
+
+    // Reset MSP430
+    reset();
 
     // Set UART3 baud to 9600 fo BSL
     UART3_BAUD = UART_BAUD_9600;
