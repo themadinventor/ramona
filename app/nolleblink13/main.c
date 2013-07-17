@@ -59,6 +59,9 @@ void delay(unsigned int ticks)
 
 void enter_bsl(void)
 {
+    // Set UART2 TxD to float
+    UART_GPIO |= UART2_TXD_FLOAT;
+
     // Set RST low
     UART2_MCR |= 0x02;
     
@@ -105,6 +108,9 @@ void reset(void)
 
     // Set RST high
     UART2_MCR &= ~0x02;
+    
+    // Set UART2 TxD to drive
+    UART_GPIO = (UART_GPIO & ~UART2_TXD_MASK) | UART2_TXD_TXD;
 }
 
 int bsl_write(struct rfcomm_pcb *pcb, uint8_t c)
@@ -274,20 +280,22 @@ int start(int p)
     UART2_MCR &= ~0x02;
 #endif
 
+    // UART3 Clock?
+    *((unsigned int *)0x0080090c) |= 0x40;
+
     // Reset MSP430
     reset();
 
     // Set UART3 baud to 9600 fo BSL
     UART3_BAUD = UART_BAUD_9600;
 
+    UART2_BAUD = UART_BAUD_9600;
+
     // Set even parity on UART3 for BSL
     UART3_LCR |= 0x18;
 
     // Enable and reset FIFOs on UART3
     UART3_FCR = 0x03;
-
-    // UART3 Clock?
-    *((unsigned int *)0x0080090c) |= 0x40;
 
     plugin_teardown(teardown);
 
