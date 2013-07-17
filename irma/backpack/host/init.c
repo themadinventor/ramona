@@ -5,6 +5,8 @@
  * 2012-12-25 <fredrik@etf.nu>
  */
 
+#include "irma.h"
+
 /*
  * vanilla bss at 00000e74 and 54548 bytes long:
  * bss ends at 0000e388
@@ -28,5 +30,13 @@ void InitDataZeroBSS(void)
 
     for (dst = &_bss, end = &_ebss; dst < end; dst++)
         *dst = 0;
+}
+
+/*
+ * Set all I/O to float
+ */
+void InitHWEarly(void)
+{
+    UART_GPIO |= UART1_TXD_FLOAT | UART2_TXD_FLOAT | UART3_TXD_FLOAT;
 }
 

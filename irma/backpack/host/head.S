@@ -43,6 +43,9 @@ thumb:
     ldr     r0, =0x2600
     mov     sp, r0
 
+    /* Early H/W initialization */
+    bl      InitHWEarly
+
     /* Check for firmware upgrade */
     bl      TryFirmwareUpgrade
 
