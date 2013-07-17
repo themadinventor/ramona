@@ -179,7 +179,7 @@
 #define ASIC_IRMAC_P2A      (0x0d)
 #define ASIC_BLINK          (0x10)
 
-/* ROM utility functions in IRMA-B P5A */
-#define ROM_CRC16(PTR, LEN, CRC) (*((uint16_t (*)(void*,uint32_t,uint16_t))(ROM_BASE+0x624)))((PTR), (LEN), (CRC))
+/* ROM utility functions in IRMA-B P5A (thumb mode) */
+#define ROM_CRC16(PTR, LEN, CRC) (*((uint16_t (*)(void*,uint32_t,uint16_t))(ROM_BASE+0x625)))((PTR), (LEN), (CRC))
 
 #endif
