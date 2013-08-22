@@ -8,6 +8,7 @@
 .global UARTInit
 .thumb_func
 UARTInit:
+    /* Set baud rate divisors */
     mov     r0, #0x14
     ldr     r1, =0x00800d00
     strb    r0, [r1]
@@ -16,10 +17,12 @@ UARTInit:
     ldr     r1, =0x00800d14
     strb    r0, [r1]
 
+    /* Drive TxD for UART1..3 */
     mov     r0, #0x2a
     ldr     r1, =0x00800d04
     strh    r0, [r1]
 
+    /* Set LCR to 0x03 */
     mov     r0, #3
     ldr     r1, =0x0080000c
     strb    r0, [r1]
@@ -28,6 +31,7 @@ UARTInit:
     ldr     r1, =0x0080020c
     strb    r0, [r1]
 
+    /* Read (clear) LSR */
     ldr     r1, =0x00800014
     ldrb    r1, [r1]
     ldr     r1, =0x00800114
@@ -35,42 +39,52 @@ UARTInit:
     ldr     r1, =0x00800214
     ldrb    r1, [r1]
 
+    /* Set 0x01 to FIFO0 Wtf? */
     mov     r0, #0x01
     ldr     r1, =0x00800b04
     strb    r0, [r1]
 
+    /* Set 0x80 to FIFO0 Ctrl? */
     mov     r0, #0x80
     ldr     r1, =0x00800b08
     strb    r0, [r1]
 
+    /* Set 0x01 to FIFO1 wtf? */
     mov     r0, #0x01
     ldr     r1, =0x00800b14
     strb    r0, [r1]
 
+    /* Set 0x80 to FIFO1 Ctrl? */
     mov     r0, #0x80
     ldr     r1, =0x00800b18
     strb    r0, [r1]
 
+    /* Set 0x01 to FIFO2 wtf? */
     mov     r0, #0x01
     ldr     r1, =0x00800b24
     strb    r0, [r1]
 
+    /* Set 0x80 to FIFO2 Ctrl? */
     mov     r0, #0x80
     ldr     r1, =0x00800b28
     strb    r0, [r1]
 
+    /* Set 0x01 to FIFO3 Wtf? */
     mov     r0, #0x01
     ldr     r1, =0x00800b34
     strb    r0, [r1]
 
+    /* Set 0x80 to FIFO3 Ctrl */
     mov     r0, #0x80
     ldr     r1, =0x00800b38
     strb    r0, [r1]
 
+    /* UART3 IIR */
     mov     r0, #0x87 //#0x01
     ldr     r1, =0x00800208
     strb    r0, [r1]
 
+    /* UART3 IER */
     mov     r0, #0x7 //#0x01
     ldr     r1, =0x00800204
     strb    r0, [r1]

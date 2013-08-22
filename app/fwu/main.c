@@ -31,13 +31,17 @@ struct fwheader {
 
 void start(void)
 {
+#ifdef DEBUG_LED
     // Turn off LED
     *((unsigned char *) 0x00800110) |= 0x02;
+#endif
 
+#ifdef DEBUG_UART
     // Initialize UART and write stuff (not really working, is buffering)
     UARTInit();
     UART2SetBaudRate(UART_115200);
     UART2WriteString("IRMA FWU\n\r");
+#endif
 
     // Calculate a pointer to the payload
     void *payload_base = &_etext + (&_edata - &_data);
@@ -45,19 +49,25 @@ void start(void)
 
     // Sanuty checks
     if (header->magic != OS_MAGIC) {
+#ifdef DEBUG_UART
         UART2WriteString("Fatal: Wrong magic\n\r");
+#endif
         goto boot;
     }
    
     if (header->size > OS_MAX_SIZE) {
+#ifdef DEBUG_UART
         UART2WriteString("Fatal: Firmware is too large\n\r");
+#endif
         goto boot;
     }
 
     // Verify checksum
     unsigned short checksum = ROM_CRC16(payload_base+8, header->size-8, 0);
     if (checksum != header->checksum) {
+#ifdef DEBUG_UART
         UART2WriteString("Fatal: Invalid checksum\n\r");
+#endif
         goto boot;
     }
 
@@ -69,21 +79,27 @@ void start(void)
     // Check that we support this flash
     unsigned int flash = flash_identify();
     if (flash != FLASH_ID) {
+#ifdef DEBUG_UART
         UART2WriteString("Fatal: Unknown flash (");
         WriteHex(flash);
         UART2WriteString(")\n\r");
+#endif
         goto boot;
     }
 
     // Erase OS
     for (unsigned int addr = FLASH_BASE; addr < FLASH_LIMIT; addr += FLASH_PAGE_SIZE) {
         if (flash_erase(addr)) {
+#ifdef DEBUG_UART
             UART2WriteString("Fatal: Failed to erase page\n\r");
+#endif
             goto reboot;
         }
 
+#ifdef DEBUG_LED
         // Toggle LED to indicate activity
         *((unsigned char *) 0x00800110) ^= 0x02;
+#endif
     }
 
     // Write new OS
@@ -91,18 +107,22 @@ void start(void)
     for (unsigned int addr = FLASH_BASE; addr < FLASH_BASE + header->size; addr += 2) {
         flash_write(addr, *src++); 
 
+#ifdef DEBUG_LED
         // Toggle LED each 4 kB to indicate activity
         if (!(addr & 0x00000fff)) {
             *((unsigned char *) 0x00800110) ^= 0x02;
         }
+#endif
     }
 
     // Destroy our signature so we won't run again
     flash_write(FLASH_LIMIT, 0); 
 
 reboot:
+#ifdef DEBUG_LED
     // Turn off LED
     *((unsigned char *) 0x00800110) |= 0x02;
+#endif
 
     // Trigger watchdog
     *((unsigned int *) 0x00800c0c) = 0xc0;
