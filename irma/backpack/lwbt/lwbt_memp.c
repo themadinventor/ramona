@@ -152,7 +152,7 @@ void * lwbt_memp_malloc(lwbt_memp_t type)
 		MEMSET(mem, 0, memp_sizes[type]);	
 		return mem;
 	} else {
-        printf("lwbt_memp_malloc: pool is empty! allocation failed.\n");
+        //printf("lwbt_memp_malloc: pool is empty! allocation failed.\n");
 		return NULL;
 	}
 }

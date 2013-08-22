@@ -327,8 +327,8 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
   } else {
     LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %s\n", memp_desc[type]));
 
-    printf("FATAL: memp_malloc: out of memory in pool %s\n", memp_desc[type]);
-    for(;;);
+    //printf("FATAL: memp_malloc: out of memory in pool %s\n", memp_desc[type]);
+    //for(;;);
 #if MEMP_STATS
     ++lwip_stats.memp[type].err;
 #endif /* MEMP_STATS */

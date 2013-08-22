@@ -23,4 +23,5 @@ typedef int			mem_ptr_t;
 #define PACK_STRUCT_STRUCT __attribute__((__packed__))
 
 #define LWIP_PLATFORM_DIAG(x) printf x
-#define LWIP_PLATFORM_ASSERT(x) printf("### ASSERT: "),printf(x), printf(" ###\n") //; trap() //; raise(SIGTRAP)
+//#define LWIP_PLATFORM_ASSERT(x) printf("### ASSERT: "),printf(x), printf(" ###\n") //; trap() //; raise(SIGTRAP)
+#define LWIP_PLATFORM_ASSERT(x) panic() //; trap() //; raise(SIGTRAP)

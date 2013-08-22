@@ -593,7 +593,7 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 	return;
 
 	errout:
-	printf("\n");
+	//printf("\n");
 	return;
 }
 
