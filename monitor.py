@@ -357,6 +357,7 @@ class InteractiveMonitor(Monitor):
 
     @MonitorCommand
     def nvdsinfo(self, args):
+        """Show some info about the non-volatile file system."""
         data = ''.join(map(chr, self.read_mem(0x000006a4, 36)))
         (write, erase, initialized, current_page,
                 tag_head, blob_head, free_space, page0, page1,
@@ -374,6 +375,7 @@ class InteractiveMonitor(Monitor):
 
     @MonitorCommand
     def nvdsread(self, args):
+        """Read a file from NVDS. Params: [tag] [size]"""
         (tag, size) = (0, 0)
         try:
             if len(args) > 0:
@@ -406,6 +408,7 @@ class InteractiveMonitor(Monitor):
 
     @MonitorCommand
     def load(self, args):
+        """Load a plugin to flash and start. Params: [filename]"""
         if len(args) < 1:
             print 'Need a filename';
             return
@@ -462,6 +465,7 @@ class InteractiveMonitor(Monitor):
 
     @MonitorCommand
     def dump(self, args):
+        """Dump memory to disk. Params: [addr] [length] [filename]"""
         (addr, length, filename) = (0, 32, 'dump.bin')
         try:
             if len(args) > 0:
@@ -487,6 +491,7 @@ class InteractiveMonitor(Monitor):
 
     @MonitorCommand
     def plugin(self, args):
+        """Start/stop plugin or show status. Params: [start|stop]"""
         if len(args) < 1 or args[0] == 'status':
             if Monitor.plugin(self, 0) > 0:
                 print 'Plugin is running'
