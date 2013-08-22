@@ -159,20 +159,6 @@ int main(void)
     /* Go for it! */
     sei();
 
-    while (1) {
-        //if (uart_rxlen() > 0) {
-            //char c = uart_receive();
-        
-            /*if (c == 0x01) {
-                PORTD |= _BV(5);
-                led_state = 1;
-            } else if (c == 0x02) {
-                PORTD &= ~_BV(5);
-                led_state = 0;
-            } else if (c == 0x03) {
-                led_state = 2;
-            }*/
-        //}
-    };
+    while (1) ;
 }
 
