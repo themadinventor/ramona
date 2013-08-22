@@ -7,7 +7,7 @@ LDNAME = ../common/irma_hi.ld
 CFLAGS =-mcpu=arm7tdmi -mthumb -I../../irma/backpack/ -I../../irma/backpack/lwbt/ -I ../../irma/backpack/fulibc/inc/ -I ../../irma/backpack/utils/ -I ../../irma/backpack/app/ -std=gnu99 -nostdlib -nostdinc -fno-builtin -Wcast-align -g
 
 TARGET=nolleblink13
-OBJS=../common/head.o main.o
+OBJS=../common/head.o main.o bsl.o spp.o
 
 all: ${TARGET}.elf
 
