@@ -42,7 +42,7 @@
 
 
 /* ---------- Memory options ---------- */
-#define MAX_NUM_CLIENTS 6 /* Maximum number of connected Bluetooth clients. No more than 6 */ 
+#define MAX_NUM_CLIENTS 4 /* Maximum number of connected Bluetooth clients. No more than 6 */ 
 
 #define MEMP_NUM_NAT_PCB 8 /* Must be set to 1 or more if NAT is used. Set this to the number of diffrent ports/ids that the application use */
 
@@ -55,7 +55,7 @@
 #define MEMP_NUM_L2CAP_PCB (2 + MAX_NUM_CLIENTS) /* One for a closing connection + one for DT + one per number of connected Bluetooth clients */
 /* MEMP_NUM_L2CAP_PCB_LISTEN: the number of listening L2CAP
    connections. */
-#define MEMP_NUM_L2CAP_PCB_LISTEN 2 /* One per listening PSM */
+#define MEMP_NUM_L2CAP_PCB_LISTEN 4 /* One per listening PSM */
 /* MEMP_NUM_L2CAP_SIG: the number of simultaneously unresponded
    L2CAP signals */
 #define MEMP_NUM_L2CAP_SIG (2 * MAX_NUM_CLIENTS)/* Two per number of connected Bluetooth clients but min 2 */
