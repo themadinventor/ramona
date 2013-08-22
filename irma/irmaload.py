@@ -3,7 +3,7 @@
 # Ericsson Bluetooth Baseband Controller
 # ROM Bootloader toolkit
 #
-# (c) 2012 <fredrik@z80.se>
+# (c) 2012-2013 Fredrik Ahlberg <fredrik@z80.se>
 
 import sys
 import serial
@@ -11,12 +11,11 @@ import struct
 import hashlib
 import time
 
-import mpsse
-
 class AVRSilencer:
 
     def __init__(self):
         try:
+            import mpsse
             self.m = mpsse.MPSSE(mpsse.BITBANG)
         except:
             print 'AVRSilencer: not initialized'
@@ -37,6 +36,8 @@ class IRMAFlasher:
 
         self.avr = AVRSilencer()
         self.avr.reset()
+
+        self.reset_polarity = False
 
         self.connect()
         #self.fastload()
@@ -88,17 +89,24 @@ class IRMAFlasher:
         else:
             return 'Unknown (%08x)' % id
 
-    # Perform a hard reset on the module by pulling /RESET
+    """ Perform a hard reset on the module by pulling /RESET """
     def hard_reset(self):
-        self.s.setRTS(False)
-        self.s.setRTS(True)
-        self.s.setRTS(False)
+        if self.reset_polarity:
+            self.s.setRTS(True)
+            self.s.setRTS(False)
+            self.s.setRTS(True)
+        else:
+            self.s.setRTS(False)
+            self.s.setRTS(True)
+            self.s.setRTS(False)
 
+    """ Set the state of the /RESET line """
     def set_reset(self, rst):
+        rst = rst ^ self.reset_polarity
         self.s.setRTS(rst)
 
-    # Try invoke the ROM bootloader by repeatedly pulling /RESET
-    # and sending the magic word until we get a response.
+    """ Try invoke the ROM bootloader by repeatedly pulling /RESET
+        and sending the magic word until we get a response. """
     def connect(self):
         sys.stdout.write('Detecting hardware... ')
 
@@ -112,7 +120,7 @@ class IRMAFlasher:
             sys.stdout.flush()
             spinidx = (spinidx + 1) % 4
 
-            for _ in xrange(40):
+            for i in xrange(8):
                 self.s.write("A\x55\x33")
                 d = self.s.read(9)
                 if len(d) == 9 and d[8] == 'R':
@@ -124,7 +132,9 @@ class IRMAFlasher:
                     self.s.timeout = None
                     return
 
-    # Send a generic blob while drawing a progress bar
+            self.reset_polarity = not self.reset_polarity
+
+    """ Send a generic blob while drawing a progress bar """
     def write_blob(self, data):
         size = len(data)
         written = 0
@@ -149,7 +159,7 @@ class IRMAFlasher:
 
         sys.stdout.write('\n')
 
-    # Download a blob, preceded by an offset-size tuple
+    """ Download a blob, preceded by an offset-size tuple """
     def load(self, filename, addr = 0):
         print 'Loading %s...' % filename
         f = file(filename)
@@ -166,34 +176,39 @@ class IRMAFlasher:
         self.s.write(struct.pack('<II', 0x00000000, len(blob)))
         self.s.write(blob)
 
-    # Fastload
+    """ Fastload """
     def fastload(self):
         print 'Fastload...'
 
         #blob = "\x02\x15\xA0\xE3\x00\x00\xA0\xE3\x00\x0D\x81\xE5\x0C\x0D\x81\xE5\x14\x0D\x81\xE5\x00\x20\x1F\xE5\x02\xF0\xA0\xE1\xB4\x00\xC0\x00"
-        blob = "\x00\x20\x1f\xe5\x02\xf0\xa0\xe1\xf4\x05\xc0\x00"
+        #blob = "\x00\x20\x1f\xe5\x02\xf0\xa0\xe1\xf4\x05\xc0\x00"
+        #blob = "\x02\x15\xa0\xe3\x02\x00\xa0\xe3\x20\x09\x81\xe5\x07\x00\xa0\xe3\x00\x09\x81\xe5\x40\x00\xa0\xe3\x00\x01\x81\xe5\x00\x00\xa0\xe3\x0c\x0d\x81\xe5\x00\x10\x1f\xe5\x11\xff\x2f\xe1\xbc\x03\xc0\x00"
+        blob = file('fastload.bin', 'rb').read()
 
-        self.s.write(struct.pack('<II', 0x00000000, len(blob)))
+        self.s.write(struct.pack('<II', 0x00010000, len(blob)))
         self.s.write(blob)
         #time.sleep(1)
-        #self.s.baudrate = 115200
 
         #self.s.write("A\x55\x33")
-        self.s.timeout = 1
-        print ' '.join(map(hex, map(ord, self.s.read(10))))
-        #d = self.s.read(9)
-        #if len(d) == 9 and d[8] == 'R':
-        #    (self.romrev, self.flashrev, c) = struct.unpack('<IIc', d)
-       # 
-       #     print 'okay!\n'
-       #     print 'Chip Revision:  %s\nFlash Revision: %08x\n' % (self.asicNameById(self.romrev), self.flashrev)
-#
-#            self.s.timeout = None
-#        else:
-#            print 'failed'
-        sys.exit(1)
+        #self.s.timeout = 1
+        if ord(self.s.read(1)) != 0x40:
+            print 'Unexpected response from fastload!'
 
-    # Download the RAM bootloader
+        self.s.baudrate = 115200
+
+        self.s.write('!')
+
+        d = self.s.read(9)
+        if len(d) == 9 and d[8] == 'R':
+            (self.romrev, self.flashrev, c) = struct.unpack('<IIc', d)
+            print 'okay!\n'
+            print 'Chip Revision:  %s\nFlash Revision: %08x\n' % (self.asicNameById(self.romrev), self.flashrev)
+            self.bootstrap()
+        else:
+            print 'failed'
+            sys.exit(1)
+
+    """ Download the RAM bootloader """
     def bootstrap(self, filename='irma_fl_ebt_1_00_(ecs412mod).axf'):
         print 'Bootstrapping %s...' % filename
         f = file(filename)
@@ -216,6 +231,7 @@ class IRMAFlasher:
 
         print 'Bootstrap is running'
 
+    """ Execute a bootloader command and return the response """
     def command(self, cmd, params = ""):
         self.s.write(cmd+params)
 
@@ -224,12 +240,15 @@ class IRMAFlasher:
         self.s.read(2) #vask
         return d[:-2]
 
+    """ Get bootloader version """
     def version(self):
         return self.command('V')
 
+    """ Get flash memory type """
     def memory(self):
         return self.command('M')
 
+    """ Erase flash memory """
     def erase(self, bank = 0):
         if bank == 0:
             print 'Erasing program banks'
@@ -242,9 +261,11 @@ class IRMAFlasher:
 
         return self.command('D%d' % bank)
 
+    """ Read a memory location """
     def read(self, addr):
         return self.command('L%06x' % int(addr))
 
+    """ Change baud rate """
     def set_baud(self, baud):
         print 'Setting baud rate to %d' % baud
 
@@ -275,6 +296,7 @@ class IRMAFlasher:
         self.s.read(2) #vask
         return d[:-2]
 
+    """ Program flash """
     def program(self, filename):
         print 'Programming %s to flash...' % filename
 
@@ -290,6 +312,7 @@ class IRMAFlasher:
     
         f.status()
 
+    """ Interrogate the status code """
     def status(self):
         s = f.command('E')
 
@@ -310,9 +333,11 @@ class IRMAFlasher:
         else:
             raise Exception('Unknown status %s' % s)
 
+    """ Leave the bootloader and reset """
     def leave(self):
         return f.s.write('Q')
 
+    """ Open a simple terminal to the target """
     def terminal(self, baudrate=9600, hex=False):
         print 'Terminal at %d baud:\n' % baudrate
         self.s.baudrate = baudrate
@@ -326,6 +351,7 @@ class IRMAFlasher:
                 sys.stdout.write(d)
             sys.stdout.flush()
 
+    """ Perform a complete erase-program-reset cycle """
     def flash(self, filename):
 
         fwrev = self.blobhash(filename)
@@ -356,6 +382,9 @@ if __name__ == '__main__':
         else:
             f = IRMAFlasher()
             f.flash(sys.argv[2])
+    elif sys.argv[1] == 'erase':
+        f = IRMAFlasher()
+        f.erase()
     elif sys.argv[1] == 'run':
         f = IRMAFlasher(boot = False)
     elif sys.argv[1] == 'reset':
