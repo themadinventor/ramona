@@ -16,6 +16,8 @@
 
 #include "btstack.h"
 
+extern void set_uart2_rx_handler(void *proc);
+
 static const u8_t spp_service_record[] =
 {
 		SDP_DES_SIZE8, 0x8, 
@@ -44,28 +46,32 @@ static const u8_t spp_service_record[] =
 };
 
 struct sdp_record *sdp_record;
-struct rfcomm_pcb *listener;
+struct rfcomm_pcb *listener, *conn;
 
 void spp_proc(struct rfcomm_pcb *pcb, int event, void *ptr, size_t len)
 {
     if (event == RFCOMM_ACCEPTED) {
-        printf("\n*** Connected\n");
+        conn = pcb;
     } else if (event == RFCOMM_RECEIVED) {
         char *c = ptr;
         while (len--) {
-            printf("%c", *c++);
+            UART2PutChar(*c++);
         }
     } else if (event == RFCOMM_DISCONNECTED) {
-        printf("\n*** Disconnected\n");
+        conn = NULL;
     }
+}
+
+void spp_uart_rx(int bytes, char *data)
+{
+    bt_rfcomm_write(conn, data, bytes);
 }
 
 void teardown(void)
 {
-    printf("spp: teardown\n");
+    set_uart2_rx_handler(NULL);
 
     if (sdp_record != NULL) {
-        printf("spp: sdp unregister & free\n");
         sdp_unregister_service(sdp_record); 
         sdp_record_free(sdp_record);
     }
@@ -74,30 +80,25 @@ void teardown(void)
         rfcomm_close(listener);
         listener = NULL;
     }
-
-    printf("spp: i'm outta here!\n");
 }
 
 int start(int p)
 {
-    //UART2SetBaudRate(UART_460800);
-    printf("spp: start\n");
+    UART2SetBaudRate(UART_115200);
+
+    set_uart2_rx_handler(spp_uart_rx);
 
     plugin_teardown(teardown);
 
     if ((listener = bt_rfcomm_listen(2, spp_proc)) == NULL) {
-        printf("spp: failed to allocate rfcomm socket\n");
         return -1;
     }
 
 	if ((sdp_record = sdp_record_new((u8_t *)spp_service_record, sizeof(spp_service_record))) != NULL) {
 		sdp_register_service(sdp_record);
 	} else {
-        printf("spp: failed to allocate sdp record\n");
         return -1;
     }
-
-    printf("spp: initialization complete\n");
 
     return 0;
 }
