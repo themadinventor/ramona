@@ -91,6 +91,7 @@ void enter_bsl(void)
     // Drive UART3 TxD
     UART_GPIO = (UART_GPIO & ~UART3_TXD_MASK) | UART3_TXD_TXD;
 
+    // Flush UART3
     while (UART3GetRxFIFOSize() > 0) {
         UART3ReadByte();
     }
