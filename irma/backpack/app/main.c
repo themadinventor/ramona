@@ -51,10 +51,10 @@ const PROCINIT backpackProc = {
     .type = 0,
     .entry = bpMain,
     .prio = 4,
-    .ptr1 = (void *)0x73d0, // linked list of processes with given prio? wrong (=other) value will crash OSE.
+    .readyq = (void *)0x73d0, // ready queue for this priority. wrong (=other) value will crash OSE.
     .pcb = procmem.bpPCB,
-    .ptr2 = procmem.stack+sizeof(procmem.stack), // top of stack?
-    .ptr3 = procmem.stack, // bottom of stack?
+    .stack_limit = procmem.stack+sizeof(procmem.stack),
+    .stack_base = procmem.stack,
     .pid = PID_BACKPACK,
     .name = "backpack"
 };
@@ -75,14 +75,18 @@ void uart2_rx_int(int bytes)
     OSE_send(&s, PID_BACKPACK);
 }
 
+void (*uart2_rx_handler)(int bytes, char *data);
+
+void set_uart2_rx_handler(void *proc)
+{
+    uart2_rx_handler = proc;
+}
 
 /*
  * This is the entry point of our thread
  */
 void bpMain(void)
 {
-    //printf("bpMain\n");
-
     lwbt_init();
     monitor_init();
 
@@ -93,27 +97,23 @@ void bpMain(void)
 
     //I2C_Init();
 
-    //timer_add(1000, SIG_TIMER_1S);
+    timer_add(1000, SIG_TIMER_1S);
 
     static const SIGSELECT anysig[] = {0};
     for(;;) {
         SIGNAL *s = OSE_receive((SIGSELECT *) anysig);
 
         switch (s->sig_no) {
-#if 0
         case SIG_TIMER_1S:
-            //UART2PutChar(0x03);
-            
-            //I2C_Write(2, 1, 3);
-            // Turn on LED
-            //*((unsigned char *) 0x00800110) &= ~0x02;
-            UART2_MCR &= ~0x02;
-
             lwbt_timer();
             timer_add(1000, SIG_TIMER_1S);
+#if 0
+            UART2_MCR &= ~0x02;
             timer_add(100, SIG_TIMER_LEDBLINK);
+#endif
             break;
 
+#if 0
         case SIG_TIMER_LEDBLINK:
             //*((unsigned char *) 0x00800110) |= 0x02;
             UART2_MCR |= 0x02;
@@ -126,12 +126,15 @@ void bpMain(void)
             break;
 
         case SIG_UART_RX:
-            //spp_write(&s->raw[3], s->raw[2]);
-            //nolle_receive(&s->raw[3], s->raw[2]);
+#if 1
+            if (uart2_rx_handler) {
+                uart2_rx_handler(s->raw[2], &s->raw[3]);
+            }
+#endif
             break;
 
-        default:
-            printf("unhandled signal %08x\n", s->sig_no);
+        //default:
+        //    printf("unhandled signal %08x\n", s->sig_no);
         }
 
         OSE_free_buf(&s);

@@ -25,10 +25,10 @@ struct PROCINIT
     unsigned int type;  /* +0x00 */
     void *entry;        /* +0x04 */
     unsigned int prio;  /* +0x08 */
-    void *ptr1;         /* +0x0c */
+    void *readyq;       /* +0x0c */
     void *pcb;          /* +0x10 */
-    void *ptr2;         /* +0x14 */
-    void *ptr3;         /* +0x18 */
+    void *stack_limit;  /* +0x14 */
+    void *stack_base;   /* +0x18 */
     unsigned int pid;   /* +0x1c */
     char name[];
 };
