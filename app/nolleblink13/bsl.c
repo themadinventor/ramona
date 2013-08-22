@@ -21,6 +21,7 @@
 
 #include "bsl.h"
 #include "spp.h"
+#include "files.h"
 
 static struct sdp_record *bsl_sdp_record;
 static struct rfcomm_pcb *bsl_listener;
@@ -194,6 +195,37 @@ static int set_baud(struct rfcomm_pcb *pcb, uint8_t c)
     return 1;
 }
 
+static int calibration(struct rfcomm_pcb *pcb, uint8_t c)
+{
+    static char buf[10];
+
+    if (bsl_len == 0) {
+        if (c == '?') {
+            if (NVDS_ReadFile(NVDS_BSL_CALIBRATION, 10, buf)) {
+                bt_rfcomm_write(pcb, "k", 1);
+                bt_rfcomm_write(pcb, buf, 10);
+            } else {
+                bt_rfcomm_write(pcb, "n", 1);
+            }
+        } else if (c == 'x') {
+            NVDS_DeleteFile(NVDS_BSL_CALIBRATION);
+            bt_rfcomm_write(pcb, "k", 1);
+        } else {
+            buf[0] = c;
+            bsl_len = 9;
+        }
+    } else {
+        buf[10 - bsl_len] = c;
+        
+        if (--bsl_len == 0) {
+            NVDS_WriteFile(NVDS_BSL_CALIBRATION, 10, buf);
+            bt_rfcomm_write(pcb, "k", 1);
+        }
+    }
+    
+    return bsl_len == 0;
+}
+
 inline static void bsl_process_byte(struct rfcomm_pcb *pcb, uint8_t c)
 {
     if (!handler) {
@@ -223,6 +255,10 @@ inline static void bsl_process_byte(struct rfcomm_pcb *pcb, uint8_t c)
             case 'x': // reset (leave BSL)
                 reset();
                 bt_rfcomm_write(pcb, "k", 1);
+                break;
+
+            case 'c': // read or write calibration
+                handler = calibration;
                 break;
 
             case 'w': // write to bsl (length + data)

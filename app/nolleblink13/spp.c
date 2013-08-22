@@ -20,10 +20,7 @@
 #include "btstack.h"
 
 #include "spp.h"
-
-enum {
-    NVDS_SPP_BAUD = 0x81
-};
+#include "files.h"
 
 static const u8_t spp_service_record[] =
 {
