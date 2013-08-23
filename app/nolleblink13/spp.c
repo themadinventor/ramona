@@ -50,12 +50,25 @@ static const u8_t spp_service_record[] =
 };
 
 static struct sdp_record *spp_sdp_record;
-static struct rfcomm_pcb *spp_listener, *spp_conn;
+static struct rfcomm_pcb *spp_listener;
+volatile static struct rfcomm_pcb *spp_conn;
+
+static void delay(unsigned int ticks)
+{
+    unsigned int wake = OSE_get_ticks() + ticks;
+    while (OSE_get_ticks() < wake) ;
+}
 
 static void spp_proc(struct rfcomm_pcb *pcb, int event, void *ptr, size_t len)
 {
     if (event == RFCOMM_ACCEPTED) {
         spp_conn = pcb;
+        
+        // Send break on UART2 TxD
+        UART2_LCR |= 0x40;
+        delay(2);
+        UART2_LCR &= ~0x40;
+
     } else if (event == RFCOMM_RECEIVED) {
         char *c = ptr;
         while (len--) {
@@ -69,7 +82,9 @@ static void spp_proc(struct rfcomm_pcb *pcb, int event, void *ptr, size_t len)
 
 static void spp_uart_rx(int bytes, char *data)
 {
-    bt_rfcomm_write(spp_conn, data, bytes);
+    if (spp_conn) {
+        bt_rfcomm_write(spp_conn, data, bytes);
+    }
 }
 
 void spp_set_baud(unsigned char baud)
