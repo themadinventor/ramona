@@ -126,11 +126,9 @@ void bpMain(void)
             break;
 
         case SIG_UART_RX:
-#if 1
             if (uart2_rx_handler) {
                 uart2_rx_handler(s->raw[2], &s->raw[3]);
             }
-#endif
             break;
 
         //default:
