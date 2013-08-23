@@ -205,7 +205,7 @@ err_t read_bdaddr_complete(void *arg, struct bd_addr *bdaddr)
 err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t result)
 {
     //u8_t cod_spp[] = {0x08,0x04,0x24}>; // Render/Audio, handsfree
-	u8_t cod_spp[] = {0x00,0x00,0x04}; // Render, misc.
+	u8_t cod_spp[] = {0x00,0x05,0x00}; // Peripheral
 	u8_t devname[32];
 	u8_t n1, n2, n3;
 	u8_t flag = HCI_SET_EV_FILTER_AUTOACC_NOROLESW; //HCI_SET_EV_FILTER_AUTOACC_ROLESW;
@@ -280,7 +280,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 				case HCI_WRITE_COD:
 					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Successful HCI_WRITE_COD.\n"));
-                        sprintf(devname, "ramona-%02x%02x%02x",
+                        sprintf(devname, "irma-%02x%02x%02x",
                                 bt_spp_state.bdaddr.addr[2],
                                 bt_spp_state.bdaddr.addr[1],
                                 bt_spp_state.bdaddr.addr[0]);
@@ -293,7 +293,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 				case HCI_WRITE_PAGE_TIMEOUT:
 					if (result == HCI_SUCCESS) {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("successful HCI_WRITE_PAGE_TIMEOUT.\n"));
-						//hci_cmd_complete(NULL); /* Initialization done, don't come back */
+						hci_cmd_complete(NULL); /* Initialization done, don't come back */
 						hci_connection_complete(acl_conn_complete);
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Initialization done.\n"));
 						//LWIP_DEBUGF(BT_SPP_DEBUG, ("Discover other Bluetooth devices.\n"));
