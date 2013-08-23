@@ -226,6 +226,52 @@ static int calibration(struct rfcomm_pcb *pcb, uint8_t c)
     return bsl_len == 0;
 }
 
+static void load_name(void)
+{
+    char buf[65];
+    if (NVDS_ReadFile(NVDS_CUTE_NAME, 64, buf)) {
+        buf[64] = 0;
+        hci_change_local_name(buf, strlen(buf)+1); // len must include trailing nul
+    } else {
+        char *name = "Blinkmojt";
+        hci_change_local_name(name, strlen(name)+1); // len must include trailing nul
+    }
+}
+
+static int cute_name(struct rfcomm_pcb *pcb, uint8_t c)
+{
+    static char buf[64];
+
+    if (bsl_len == 0) {
+        if (c == '?') {
+            if (NVDS_ReadFile(NVDS_CUTE_NAME, 64, buf)) {
+                bt_rfcomm_write(pcb, "k", 1);
+                bt_rfcomm_write(pcb, buf, 64);
+            } else {
+                bt_rfcomm_write(pcb, "n", 1);
+            }
+        } else if (c == 'x') {
+            NVDS_DeleteFile(NVDS_CUTE_NAME);
+            load_name();
+            bt_rfcomm_write(pcb, "k", 1);
+        } else if (c == 's') {
+            bsl_len = 64;
+        } else {
+            bt_rfcomm_write(pcb, "E", 1);
+        }
+    } else {
+        buf[64-bsl_len] = c;
+        
+        if (--bsl_len == 0) {
+            NVDS_WriteFile(NVDS_CUTE_NAME, 64, buf);
+            load_name();
+            bt_rfcomm_write(pcb, "k", 1);
+        }
+    }
+    
+    return bsl_len == 0;
+}
+
 inline static void bsl_process_byte(struct rfcomm_pcb *pcb, uint8_t c)
 {
     if (!handler) {
@@ -259,6 +305,10 @@ inline static void bsl_process_byte(struct rfcomm_pcb *pcb, uint8_t c)
 
             case 'c': // read or write calibration
                 handler = calibration;
+                break;
+
+            case 'n': // read or write name
+                handler = cute_name;
                 break;
 
             case 'w': // write to bsl (length + data)
@@ -336,6 +386,8 @@ int bsl_init(void)
 	} else {
         return -1;
     }
+
+    load_name();
 }
 
 void bsl_teardown(void)
