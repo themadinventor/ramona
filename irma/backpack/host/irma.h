@@ -180,6 +180,13 @@
 #define ASIC_BLINK          (0x10)
 
 /* ROM utility functions in IRMA-B P5A (thumb mode) */
-#define ROM_CRC16(PTR, LEN, CRC) (*((uint16_t (*)(void*,uint32_t,uint16_t))(ROM_BASE+0x625)))((PTR), (LEN), (CRC))
+#define ROM_CRC16(PTR, LEN, CRC)    (*((uint16_t    (*)(void*,uint32_t,uint16_t))       (ROM_BASE+0x625)))((PTR), (LEN), (CRC))
+#define ROM_CRC32(PTR, LEN, CRC)    (*((uint32_t    (*)(void*,uint32_t,uint32_t))       (ROM_BASE+0x651)))((PTR), (LEN), (CRC))
+#define ROM_strlen(PTR)             (*((uint32_t    (*)(const void*))                   (ROM_BASE+0x67d)))((PTR))
+#define ROM_strcpy(DST, SRC)        (*((void        (*)(void*,const void*))             (ROM_BASE+0x6c5)))((DST), (SRC))
+#define ROM_strcmp(S1, S2)          (*((int32_t     (*)(const void*,const void*))       (ROM_BASE+0x709)))((S1), (S2))
+#define ROM_popcount(X)             (*((uint32_t    (*)(uint32_t))                      (ROM_BASE+0x765)))((X))
+#define ROM_memcpy(DST, SRC, LEN)   (*((void*       (*)(void*,const void*,uint32_t))    (ROM_BASE+0x791)))((DST), (SRC), (LEN))
+#define ROM_memset(DST, VAL, LEN)   (*((void*       (*)(void*,uint32_t,uint32_t))       (ROM_BASE+0x817)))((DST), (VAL), (LEN))
 
 #endif
