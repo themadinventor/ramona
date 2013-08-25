@@ -297,11 +297,11 @@ class IRMAFlasher:
         return d[:-2]
 
     """ Program flash """
-    def program(self, filename):
-        print 'Programming %s to flash...' % filename
+    def program(self, filename, addr = 0x01000000):
+        print 'Programming %s to flash at %08x...' % (filename, addr)
 
         f.s.write('P')
-        f.load(filename, 0x01000000)
+        f.load(filename, addr)
 
         d = f.s.readline()
         f.s.read(2) #vask
@@ -367,6 +367,12 @@ class IRMAFlasher:
         self.leave()
         self.avr.release()
 
+    def plugin(self, filename):
+        self.program(filename, 0x01060000)
+
+        self.leave()
+        self.avr.release()
+
 def usage():
     print 'Usage: %s [flash|run]' % sys.argv[0]
     sys.exit(1)
@@ -382,6 +388,17 @@ if __name__ == '__main__':
         else:
             f = IRMAFlasher()
             f.flash(sys.argv[2])
+
+            if len(sys.argv) > 3:
+                f.plugin(sys.argv[3])
+
+    elif sys.argv[1] == 'plugin':
+        if len(sys.argv) < 3:
+            print 'Expected file name.'
+            sys.exit(1)
+        else:
+            f = IRMAFlasher()
+            f.plugin(sys.argv[2])
     elif sys.argv[1] == 'erase':
         f = IRMAFlasher()
         f.erase()
