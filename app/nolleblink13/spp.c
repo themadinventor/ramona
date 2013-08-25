@@ -98,6 +98,24 @@ unsigned char spp_get_baud(void)
     return UART2_BAUD;
 }
 
+static void tick_handler(void)
+{
+    static int inquiry_timeout = 60;
+
+    if ((inquiry_timeout) && !(--inquiry_timeout)) {
+        hci_write_scan_enable(HCI_SCAN_EN_PAGE);
+    }
+
+    // Received break?
+    if (UART2_LSR & 0x10) {
+        UART2_LSR &= ~0x10;
+        if (spp_conn) {
+            bt_rfcomm_disconnect(spp_conn);
+            spp_conn = NULL;
+        }
+    }
+}
+
 int spp_init(void)
 {
     if ((spp_listener = bt_rfcomm_listen(2, spp_proc)) == NULL) {
@@ -111,6 +129,7 @@ int spp_init(void)
     }
 
     set_uart2_rx_handler(spp_uart_rx);
+    set_tick_handler(tick_handler);
 
     unsigned char baud;
     if (NVDS_ReadFile(NVDS_SPP_BAUD, 1, &baud)) {
@@ -123,6 +142,7 @@ int spp_init(void)
 void spp_teardown(void)
 {
     set_uart2_rx_handler(NULL);
+    set_tick_handler(NULL);
 
     if (spp_sdp_record != NULL) {
         sdp_unregister_service(spp_sdp_record); 
