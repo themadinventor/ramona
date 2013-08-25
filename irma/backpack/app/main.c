@@ -82,6 +82,20 @@ void set_uart2_rx_handler(void *proc)
     uart2_rx_handler = proc;
 }
 
+void (*tick_handler)(void);
+
+void set_tick_handler(void *proc)
+{
+    tick_handler = proc;
+}
+
+int (*signal_handler)(SIGNAL *s);
+
+void set_signal_handler(void *proc)
+{
+    signal_handler = proc;
+}
+
 /*
  * This is the entry point of our thread
  */
@@ -103,10 +117,21 @@ void bpMain(void)
     for(;;) {
         SIGNAL *s = OSE_receive((SIGSELECT *) anysig);
 
+        if (signal_handler) {
+            if (signal_handler(s)) {
+                OSE_free_buf(&s);
+                continue;
+            }
+        }
+
         switch (s->sig_no) {
         case SIG_TIMER_1S:
             lwbt_timer();
             timer_add(1000, SIG_TIMER_1S);
+
+            if (tick_handler) {
+                tick_handler();
+            }
 #if 0
             UART2_MCR &= ~0x02;
             timer_add(100, SIG_TIMER_LEDBLINK);

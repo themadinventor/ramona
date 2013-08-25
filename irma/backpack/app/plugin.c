@@ -94,6 +94,10 @@ void plugin_disable(void)
 {
     if (plugin_state != PLUGIN_DISABLED && plugin_teardown_proc) {
         plugin_teardown_proc();
+
+        set_uart2_rx_handler(NULL);
+        set_tick_handler(NULL);
+        set_signal_handler(NULL);
     }
 
     plugin_state = PLUGIN_DISABLED;
