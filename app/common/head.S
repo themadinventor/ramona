@@ -8,10 +8,14 @@
 .thumb
 .section .head
 
+#ifndef __IRMA_FLAGS__
+#define __IRMA_FLAGS__ 0
+#endif
+
 /* Plugin Header */
 magic:
     .int    0x414d5249      /*  +0: Magic */
-    .int    0               /*  +4: Flags */
+    .int    __IRMA_FLAGS__  /*  +4: Flags */
     .int    _text           /*  +8: .text */
     .int    _etext          /*  +c: end of .text */
     .int    _data           /* +10: .data */
