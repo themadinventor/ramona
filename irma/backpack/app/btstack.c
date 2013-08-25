@@ -298,6 +298,7 @@ err_t command_complete(void *arg, struct hci_pcb *pcb, u8_t ogf, u8_t ocf, u8_t 
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Initialization done.\n"));
 						//LWIP_DEBUGF(BT_SPP_DEBUG, ("Discover other Bluetooth devices.\n"));
 						//hci_inquiry(0x009E8B33, 0x04, 0x01, inquiry_complete); //FAILED????
+                        btstack_init_complete();
 					} else {
 						LWIP_DEBUGF(BT_SPP_DEBUG, ("Unsuccessful HCI_WRITE_PAGE_TIMEOUT.\n"));
 						return ERR_CONN;

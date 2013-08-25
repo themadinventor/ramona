@@ -1,12 +1,14 @@
 #ifndef PLUGIN_H
 #define PLUGIN_H
 
-#define PLUGIN_BASE 0x01060000
-#define PLUGIN_LIMIT 0x90000
+#define PLUGIN_BASE             0x01060000
+#define PLUGIN_LIMIT            0x90000
 
-#define PLUGIN_MAGIC 0x414d5249
-#define PLUGIN_CRC_1 28
-#define PLUGIN_CRC_2 32
+#define PLUGIN_MAGIC            0x414d5249
+#define PLUGIN_CRC_1            28
+#define PLUGIN_CRC_2            32
+
+#define PLUGIN_FLAG_AUTOSTART   0x00000001
 
 struct plugin {
     unsigned int magic;
@@ -27,5 +29,6 @@ void plugin_enable(void);
 void plugin_teardown(void (*proc)(void));
 void plugin_disable(void);
 int plugin_enabled(void);
+int plugin_is_autostart(void);
 
 #endif

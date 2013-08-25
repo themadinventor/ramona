@@ -96,6 +96,14 @@ void set_signal_handler(void *proc)
     signal_handler = proc;
 }
 
+void btstack_init_complete(void)
+{
+    char autostart;
+    if (plugin_is_autostart() || (NVDS_ReadFile(0x80, 1, &autostart) && autostart)) {
+        plugin_enable();
+    }
+}
+
 /*
  * This is the entry point of our thread
  */
@@ -103,11 +111,6 @@ void bpMain(void)
 {
     lwbt_init();
     monitor_init();
-
-    char autostart;
-    if (NVDS_ReadFile(0x80, 1, &autostart) && autostart) {
-        plugin_enable();
-    }
 
     //I2C_Init();
 

@@ -107,3 +107,9 @@ int plugin_enabled(void)
 {
     return plugin_state != PLUGIN_DISABLED;
 }
+
+int plugin_is_autostart(void)
+{
+    return (plugin->magic == PLUGIN_MAGIC) && (plugin->flags & PLUGIN_FLAG_AUTOSTART);
+}
+
