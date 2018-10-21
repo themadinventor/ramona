@@ -14,7 +14,7 @@ magic:
     nop                     /* +4: Blob checksum */
 entry:                      /* +8: ROM jumps here */
     nop
-    bl      start
+    bl      __start
 
 /*.balign 0x30
     .ascii  ""              / * +30: Build timestamp * /
@@ -26,11 +26,11 @@ entry:                      /* +8: ROM jumps here */
 /* but initialize our memory first. */
 .arm
 .balign 0x80                /* +80: Entry point */
-start:
-    ldr     r0, =(thumb+1)
+__start:
+    ldr     r0, =(__thumb+1)
     bx      r0
 .thumb
-thumb:
+__thumb:
     /* Disable interrupts? */
     ldr     r0, =0x00800500
     mov     r1, #0
@@ -53,10 +53,10 @@ thumb:
     bl      InitDataZeroBSS
 
     /* Call original firmware */
-    ldr     r0, =arm
+    ldr     r0, =__arm
     bx      r0
 .arm
-arm:
+__arm:
     ldr     r0, =0x01010004
     mov     pc, r0
 

@@ -61,14 +61,14 @@ static void transport_if_send_hci_event(int interface, void *packet, int length)
         return;
     }
 
-    SIGNAL *s = OSE_alloc(2+255, SIG_TRANSPORT_EVENT);
+    SIGNAL *s = alloc(2+255, SIG_TRANSPORT_EVENT);
     if (!s) {
         LWIP_DEBUGF(PHYBUSIF_DEBUG, ("HCI Event: Unable to allocate signal, dropping.\n"));
         return;
     }
 
     memcpy(&s->raw[2], packet, length);
-    OSE_send(&s, PID_BACKPACK);
+    send(&s, PID_BACKPACK);
     HCI_Trans_Event_Sent(TRANSPORT_IF);
 }
 
@@ -85,14 +85,14 @@ static void transport_if_send_hci_data(int interface, void *packet, int length)
         return;
     }
 
-    SIGNAL *s = OSE_alloc(806, SIG_TRANSPORT_DATA);
+    SIGNAL *s = alloc(806, SIG_TRANSPORT_DATA);
     if (!s) {
         LWIP_DEBUGF(PHYBUSIF_DEBUG, ("HCI Data: Unable to allocate signal, dropping.\n"));
         return;
     }
 
     memcpy(&s->raw[2], packet, length);
-    OSE_send(&s, PID_BACKPACK);
+    send(&s, PID_BACKPACK);
     HCI_Trans_ACL_Sent(TRANSPORT_IF);
 }
 
@@ -193,9 +193,9 @@ void phybusif_output(struct pbuf *p, u16_t len)
                 //LWIP_DEBUGF(PHYBUSIF_DEBUG, ("[%02x] ", type));
 
                 if (type == 0x01) {
-                    s = OSE_alloc(5+255, 0x9d); // HCI_Cmd
+                    s = alloc(5+255, 0x9d); // HCI_Cmd
                 } else if (type == 0x02) {
-                    s = OSE_alloc(806, 0x94); // HCI_ACL
+                    s = alloc(806, 0x94); // HCI_ACL
                 } else {
                     LWIP_DEBUGF(PHYBUSIF_DEBUG, ("phybusif_output: unknown hci packet type %02x!\n", type));
                     for (;;) ;
@@ -213,6 +213,6 @@ void phybusif_output(struct pbuf *p, u16_t len)
     if (type == 0x02) {
         HCI_Input_ACL(TRANSPORT_IF, s);
     } else {
-        OSE_send(&s, proc_hci);
+        send(&s, proc_hci);
     }
 }

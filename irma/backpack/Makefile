@@ -11,7 +11,7 @@ LWIP = lwip/mem.o lwip/memp.o lwip/pbuf.o lwip/inet.o lwip/stats.o
 FULIBC = $(subst .c,.o,$(shell find fulibc/ -name '*.c'))
 APP = $(subst .c,.o,$(shell find app/ -name '*.c'))
 UTILS = utils/utils.o utils/uart.o
-HOST = host/api.o host/head.o host/init.o
+HOST = host/api.o host/ose.o host/head.o host/init.o
 
 all: backpack.elf
 

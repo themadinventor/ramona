@@ -63,27 +63,6 @@ __aeabi_idiv:
 .global HCI_Trans_ACL_Sent
 .thumb_set HCI_Trans_ACL_Sent, 0x0103bae8
 
-.global OSE_alloc
-.thumb_set OSE_alloc, 0x01042630
-
-.global OSE_free_buf
-.thumb_set OSE_free_buf, 0x010427dc
-
-.global OSE_receive
-.thumb_set OSE_receive, 0x010428d4
-
-.global OSE_send
-.thumb_set OSE_send, 0x01043bb8
-
-.global OSE_sender
-.thumb_set OSE_sender, 0x01043cb4
-
-.global OSE_get_ticks
-.thumb_set OSE_get_ticks, 0x010430d4
-
-.global OSE_UserError
-.thumb_set OSE_UserError, 0x01042784
-
 .global timer_add
 .thumb_set timer_add, 0x01010ad4
 
@@ -114,5 +93,5 @@ __aeabi_idiv:
 .global ose_crash_info
 .set ose_crash_info, 0x7218
 
-.global ROM_CRC16
-.thumb_set ROM_CRC16, 0x00c00624
+#.global ROM_CRC16
+#.thumb_set ROM_CRC16, 0x00c00624

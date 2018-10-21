@@ -326,7 +326,7 @@ void lwbt_init(void)
     transport_init();
     if (hci_init() != ERR_OK) {
 		LWIP_DEBUGF(BT_SPP_DEBUG, ("lwbt_init: HCI Initialization failed\n"));
-        OSE_UserError(0x99);
+        UserError(0x99);
     }
 
     l2cap_init();
@@ -346,7 +346,7 @@ void lwbt_init(void)
 
 	if (bt_spp_init() != ERR_OK) {
 		LWIP_DEBUGF(BT_SPP_DEBUG, ("lwbt_init: couldn't init role\n"));
-        OSE_UserError(0x99);
+        UserError(0x99);
 	}
 }
 

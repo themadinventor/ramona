@@ -54,6 +54,12 @@ p.arm_mov_pc(0x010548c0 + 0x10, 0x010548c0 + 0x34)
 #p.setl(0x01043f9c, p.getl(0x01010150))   #tos
 #p.setl(0x01043fa0, p.getl(0x01010154))    #bos
 
+# Disable USB
+p.thumb_bxlr(0x0103c73c)	# USB_Ini
+p.thumb_bxlr(0x0103c888)	# USB_Disable
+p.thumb_bxlr(0x0103dac0)	# usb_irq
+p.thumb_bxlr(0x0103db1c)	# usb_detac_irq
+
 # Inject process descriptor
 p.setl(0x01043da4, s.syms['backpackProc'])
 

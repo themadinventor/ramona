@@ -352,7 +352,7 @@ class IRMAFlasher:
             sys.stdout.flush()
 
     """ Perform a complete erase-program-reset cycle """
-    def flash(self, filename):
+    def flash(self, filename, reboot = True):
 
         fwrev = self.blobhash(filename)
         print 'Firmware to download: %s' % fwrev
@@ -363,13 +363,15 @@ class IRMAFlasher:
         self.erase()
         self.program(filename)
 
-        print 'Rebooting...'
-        self.leave()
-        self.avr.release()
+        if reboot:
+            print 'Rebooting...'
+            self.leave()
+            self.avr.release()
 
     def plugin(self, filename):
         self.program(filename, 0x01060000)
 
+        print 'Rebooting...'
         self.leave()
         self.avr.release()
 
@@ -387,7 +389,7 @@ if __name__ == '__main__':
             sys.exit(1)
         else:
             f = IRMAFlasher()
-            f.flash(sys.argv[2])
+            f.flash(sys.argv[2], reboot = len(sys.argv) <= 3)
 
             if len(sys.argv) > 3:
                 f.plugin(sys.argv[3])

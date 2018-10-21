@@ -101,6 +101,15 @@ class Patcher:
 
         self._bin = self._bin[:addr] + s + self._bin[addr+len(s):]
 
+    def arm_nop(self, addr):
+	self.setl(addr, 0xe1a00000)
+
+    def thumb_nop(self, addr):
+	self.setw(addr, 0x46c0)
+
+    def thumb_bxlr(self, addr):
+	self.setw(addr, 0x4770)
+
     def arm_bl(self, addr, where):
         if (addr % 2 > 0) or (where % 2 > 0):
             raise ValueException('Not aligned')

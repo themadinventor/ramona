@@ -97,6 +97,9 @@ class PyIO(object):
         else:
             self.s.send(chr(0x80|(op << 3)|arg)+chr(data))
 
+    def close(self):
+        self.s.close()
+
 if __name__ == '__main__':
     addr = '00:80:37:14:49:4b'
 
@@ -119,6 +122,7 @@ if __name__ == '__main__':
             p.GPIOC.PORT = 0x08|1
         else:
             p.GPIOC.PORT = 0x04|1
+        p.GPIOD.PORT ^= (1<<5)
         #time.sleep(.1)
 
     s.close()

@@ -1,4 +1,5 @@
 #include "host/app.h"
+#include "host/irma.h"
 #include "plugin.h"
 
 #include <stdint.h>

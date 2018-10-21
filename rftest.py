@@ -7,8 +7,8 @@ import termios
 from bluetooth.bluez import BluetoothSocket
 from bluetooth.btcommon import BluetoothError
 
-addr = '00:80:37:14:42:df'
-port = 1
+addr = '00:80:37:14:49:4d'
+port = 2
 
 print '*** Connecting to %s-%d...' % (addr, port),
 sys.stdout.flush()

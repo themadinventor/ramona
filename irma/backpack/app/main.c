@@ -51,7 +51,7 @@ const PROCINIT backpackProc = {
     .type = 0,
     .entry = bpMain,
     .prio = 4,
-    .readyq = (void *)0x73d0, // ready queue for this priority. wrong (=other) value will crash OSE.
+    .readyq = &readyq_4,
     .pcb = procmem.bpPCB,
     .stack_limit = procmem.stack+sizeof(procmem.stack),
     .stack_base = procmem.stack,
@@ -64,7 +64,7 @@ const PROCINIT backpackProc = {
  */
 void uart2_rx_int(int bytes)
 {
-    SIGNAL *s = OSE_alloc(3+bytes, SIG_UART_RX);
+    SIGNAL *s = alloc(3+bytes, SIG_UART_RX);
 
     s->raw[2] = bytes;
     int idx = 0;
@@ -72,7 +72,7 @@ void uart2_rx_int(int bytes)
         s->raw[3+idx++] = UART2ReadByte();
     }
 
-    OSE_send(&s, PID_BACKPACK);
+    send(&s, PID_BACKPACK);
 }
 
 void (*uart2_rx_handler)(int bytes, char *data);
@@ -118,11 +118,11 @@ void bpMain(void)
 
     static const SIGSELECT anysig[] = {0};
     for(;;) {
-        SIGNAL *s = OSE_receive((SIGSELECT *) anysig);
+        SIGNAL *s = receive((SIGSELECT *) anysig);
 
         if (signal_handler) {
             if (signal_handler(s)) {
-                OSE_free_buf(&s);
+                free_buf(&s);
                 continue;
             }
         }
@@ -163,7 +163,7 @@ void bpMain(void)
         //    printf("unhandled signal %08x\n", s->sig_no);
         }
 
-        OSE_free_buf(&s);
+        free_buf(&s);
     }
 }
 
